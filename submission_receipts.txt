@@ -1,0 +1,43 @@
+(magloader) schudoma@mac-bork50 magloader % curl -u 'Webin-68314:qvy!qdu9bgv5HVQ6xfq' -F "SUBMISSION=@dummy_submission.xml" -F "STUDY=@dummy_study.xml" "https://www.ebi.ac.uk/ena/submit/drop-box/submit/"
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="receipt.xsl"?>
+<RECEIPT receiptDate="2024-10-31T14:51:12.883Z" submissionFile="dummy_submission.xml" success="true">
+     <STUDY accession="ERP165689" alias="spire_dummy_study" status="PRIVATE" holdUntilDate="2026-10-31Z">
+          <EXT_ID accession="PRJEB81898" type="Project"/>
+     </STUDY>
+     <SUBMISSION accession="ERA30920342" alias="SUBMISSION-31-10-2024-14:51:12:606"/>
+     <MESSAGES/>
+     <ACTIONS>ADD</ACTIONS>
+</RECEIPT>%
+
+(magloader) schudoma@mac-bork50 magloader % curl -u 'Webin-68314:qvy!qdu9bgv5HVQ6xfq' -F "SUBMISSION=@dummy_submission.xml" -F "SAMPLE=@dummy_sample.xml" "https://www.ebi.ac.uk/ena/submit/drop-box/submit/"
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="receipt.xsl"?>
+<RECEIPT receiptDate="2024-10-31T14:53:43.280Z" submissionFile="dummy_submission.xml" success="true">
+     <SAMPLE accession="ERS21390613" alias="spire_dummy_sample_177x" status="PRIVATE">
+          <EXT_ID accession="SAMEA116341762" type="biosample"/>
+     </SAMPLE>
+     <SUBMISSION accession="ERA30920344" alias="SUBMISSION-31-10-2024-14:53:42:981"/>
+     <MESSAGES/>
+     <ACTIONS>ADD</ACTIONS>
+</RECEIPT>%
+
+(magloader) schudoma@mac-bork50 magloader % curl -u 'Webin-68314:qvy!qdu9bgv5HVQ6xfq' -F "SUBMISSION=@dummy_update.xml" "https://www.ebi.ac.uk/ena/submit/drop-box/submit/"
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="receipt.xsl"?>
+<RECEIPT receiptDate="2024-10-31T15:06:32.819Z" submissionFile="dummy_update.xml" success="true">
+     <MESSAGES>
+          <INFO>study accession "ERP165689" is set to public status.</INFO>
+     </MESSAGES>
+     <ACTIONS>RELEASE</ACTIONS>
+</RECEIPT>%
+
+(magloader) schudoma@mac-bork50 magloader % curl -u 'Webin-68314:qvy!qdu9bgv5HVQ6xfq' -F "SUBMISSION=@dummy_update.xml" "https://www.ebi.ac.uk/ena/submit/drop-box/submit/"
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="receipt.xsl"?>
+<RECEIPT receiptDate="2024-10-31T15:07:31.286Z" submissionFile="dummy_update.xml" success="true">
+     <MESSAGES>
+          <INFO>sample accession "ERS21390613" is set to public status.</INFO>
+     </MESSAGES>
+     <ACTIONS>RELEASE</ACTIONS>
+</RECEIPT>%

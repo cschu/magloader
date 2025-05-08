@@ -1,0 +1,27 @@
+<SAMPLE_SET>
+  <SAMPLE alias="spire_sample_177x">
+    <TITLE>SPIRE v01 metagenomic sample spire_sample_177x</TITLE>
+    <SAMPLE_NAME>
+      <TAXON_ID>256318</TAXON_ID>
+    </SAMPLE_NAME>
+    <DESCRIPTION>SPIRE v01 sample. This is a virtual sample, containing SAMEA104408691.</DESCRIPTION>
+    <SAMPLE_LINKS>
+        <SAMPLE_LINK>
+            <XREF_LINK>
+                <DB>BIOSAMPLE</DB>
+                <ID>SAMEA104408691</ID>
+            </XREF_LINK>
+        </SAMPLE_LINK>
+    </SAMPLE_LINKS>
+    <SAMPLE_ATTRIBUTES>   
+      <SAMPLE_ATTRIBUTE>
+        <TAG>collection date</TAG>
+        <VALUE>missing: third party data</VALUE>
+      </SAMPLE_ATTRIBUTE>   
+      <SAMPLE_ATTRIBUTE>
+        <TAG>geographic location (country and/or sea)</TAG>
+        <VALUE>missing: third party data</VALUE>
+      </SAMPLE_ATTRIBUTE>   
+    </SAMPLE_ATTRIBUTES> 
+  </SAMPLE>
+</SAMPLE_SET>

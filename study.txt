@@ -1,0 +1,7 @@
+title:   SPIRE v01 TPA metagenomic analyses (assembly & MAGs) of project spire_study_4
+raw_data_projects:  PRJEB22997
+spire_study_link:   https://spire.embl.de/study/4
+description:    Third Party Annotations (TPA) derived from PRJEB22997 as part of the SPIRE database v01 where the data is accessible under study spire_study_4. This project bundles data on metagenomic assemblies (using MEGAHIT v1.2.9) and derived metagenome-assembled genomes. Data was processed using the SPIRE pipeline v1.0.0. Please see https://spire.embl.de/study/4 for additional information.
+center_name:    EMBL Heidelberg
+study_keyword:  TPA:assembly
+new_study_type: Metagenomic assembly
