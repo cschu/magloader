@@ -5,7 +5,7 @@ import lxml.etree, lxml.builder
 import requests
 
 # from submission import generate_submission
-from .submission import SubmissionResponse
+from .submission import SubmissionResponse,  SubmissionResponseObject
 
 
 DESCRIPTION = "SPIRE v01 sample. This is a virtual sample, derived from {sample_list}."
@@ -28,10 +28,9 @@ class SampleSet:
 
         return doc
     
-    def parse_submission_response(self, response):
-        if self.samples:
-            return self.samples[0].parse_submission_response(response)
-        return "NO_RESPONSE"
+    @staticmethod
+    def parse_submission_response(response):
+        yield from Sample.parse_submission_response(response)
 
 
 
@@ -112,5 +111,17 @@ class Sample:
 
     @staticmethod
     def parse_submission_response(response):
-        xml = "\n".join(line for line in response.text.strip().split("\n") if line[:5] != "<?xml")
-        print(xml)
+
+        for sample in response.findall("SAMPLE"):
+
+            d = dict(
+                object_type="sample",
+                alias=sample.attrib.get("alias"),
+                status=sample.attrib.get("status"),
+                hold_until=sample.attrib.get("holdUntilDate"),
+                accession=sample.attrib.get("accession"),
+            )            
+
+            ext_id = sample.find("EXT_ID")
+            d["ext_accession"] = ext_id.attrib.get("accession") if ext_id is not None else None
+            yield SubmissionResponseObject(**d)

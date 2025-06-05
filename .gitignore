@@ -1,2 +1,7 @@
 user_info.txt
-__pycache__
+__pycache__/
+*.pyc
+*.egg-info
+build/
+webin-cli.report
+*.fasta.gz*

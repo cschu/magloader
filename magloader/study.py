@@ -5,7 +5,7 @@ import lxml.etree, lxml.builder
 import requests
 
 
-from .submission import SubmissionResponse
+from .submission import SubmissionResponse, SubmissionResponseObject
 
 
 DESCRIPTION = """
@@ -103,7 +103,7 @@ class Study:
                         value(self.study_keyword),
                     )
                 ),
-                alias=self.study_id + ".zzzzzzza",
+                alias=self.study_id,
                 center_name=self.center_name,
             )
         )
@@ -125,36 +125,62 @@ class Study:
 
     #     return parse_submission_response(response)
         
-    def parse_submission_response(self, response):
-        xml = "\n".join(line for line in response.text.strip().split("\n") if line[:5] != "<?xml")
-        tree = lxml.etree.fromstring(xml)
+    @staticmethod
+    def parse_submission_response(response):
 
-        d = {
-            "success": tree.attrib.get("success", "false").lower() != "false",
-            "receipt_date": tree.attrib.get("receiptDate"),            
-        }
-        
-        study = tree.find("STUDY")
-        if study is not None:        
-            d["alias"] = study.attrib.get("alias")
-            d["status"] = study.attrib.get("status")
-            d["hold_until"] = study.attrib.get("holdUntilDate")
-            d["accession"] = study.attrib.get("accession")
+        study = response.find("STUDY")
+        if study is not None:
             ext_id = study.find("EXT_ID")
-            if ext_id is not None:
-                d["ext_accession"] = ext_id.attrib.get("accession")
+            yield SubmissionResponseObject(
+                object_type="study",
+                alias=study.attrib.get("alias"),
+                status=study.attrib.get("status"),
+                hold_until=study.attrib.get("holdUntilDate"),
+                accession=study.attrib.get("accession"),
+                ext_accession=ext_id.attrib.get("accession") if ext_id is not None else None,
+            )
 
-        submission = tree.find("SUBMISSION")
-        if submission is not None:
-            d["submission_accession"] = submission.attrib.get("accession")
-            d["submission_alias"] = submission.attrib.get("alias")
 
-        messages = tree.find("MESSAGES")
-        if messages is not None:
-            d["messages"] = [(m.tag, m.text) for m in messages.getchildren()]
+        # xml = "\n".join(line for line in response.text.strip().split("\n") if line[:5] != "<?xml")
+        # tree = lxml.etree.fromstring(xml)
+
+        # d = {
+        #     "success": tree.attrib.get("success", "false").lower() != "false",
+        #     "receipt_date": tree.attrib.get("receiptDate"),
+        #     "objects": [],
+        # }
+        
+        # study = tree.find("STUDY")
+        # if study is not None:
+        #     ext_id = study.find("EXT_ID")
+        #     study_obj = SubmissionResponseObject(
+        #         object_type="study",
+        #         alias=study.attrib.get("alias"),
+        #         status=study.attrib.get("status"),
+        #         hold_until=study.attrib.get("holdUntilDate"),
+        #         accession=study.attrib.get("accession"),
+        #         ext_accession=ext_id.attrib.get("accession") if ext_id is not None else None,
+        #     )
+        #     d["objects"].append(study_obj)
+        #     # d["alias"] = study.attrib.get("alias")
+        #     # d["status"] = study.attrib.get("status")
+        #     # d["hold_until"] = study.attrib.get("holdUntilDate")
+        #     # d["accession"] = study.attrib.get("accession")
+        #     # ext_id = study.find("EXT_ID")
+        #     # if ext_id is not None:
+        #     #     d["ext_accession"] = ext_id.attrib.get("accession")
+
+        # submission = tree.find("SUBMISSION")
+        # if submission is not None:
+        #     d["submission_accession"] = submission.attrib.get("accession")
+        #     d["submission_alias"] = submission.attrib.get("alias")
+
+        # messages = tree.find("MESSAGES")
+        # if messages is not None:
+        #     d["messages"] = [(m.tag, m.text) for m in messages.getchildren()]
         
 
-        return SubmissionResponse(**d)
+        # return SubmissionResponse(**d)
 
 
     

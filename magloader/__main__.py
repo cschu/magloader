@@ -1,8 +1,12 @@
+#!/usr/bin/env python
+
 import argparse
 import csv
 
 import lxml.etree
 
+from .assembly import Assembly
+from .manifest import Manifest
 from .sample import Sample, SampleSet
 from .study import Study
 from .submission import Submission
@@ -24,16 +28,16 @@ def parse_assemblies(f):
         for i, assembly_data in enumerate(csv.DictReader(_in, delimiter="\t"), start=1):
             if i > 2:
                 break
-            sample = Sample(
-                **{
-                    k: v
-                    for k, v in assembly_data.items()
-                    if k in Sample.__match_args__
-                }
-            )
-            # print(sample)
-            # print(lxml.etree.tostring(sample.toxml()).decode())
-            yield sample
+            assembly = Assembly(**assembly_data)
+            # sample = Sample(
+            #     **{
+            #         k: v
+            #         for k, v in assembly_data.items()
+            #         if k in Sample.__match_args__
+            #     }
+            # )
+            # yield sample
+            yield assembly
             
             
 
@@ -49,21 +53,38 @@ def main():
     args = ap.parse_args()
 
     user, pw = get_webin_credentials(args.webin_credentials)
-    sub = Submission(user, pw, hold_date="2024-10-31", dev=True)
+
+    sub = Submission(user, pw, hold_date="2025-12-31", dev=True)    
+    for study in parse_studies(args.study_tsv):
+        response = sub.submit(study)
+        print(response)
+
+    ena_study = response.objects[0].accession
+
+    sub = Submission(user, pw, hold_date="2025-12-31", dev=True)
+
+    assemblies = {assembly.sample_id: assembly for assembly in parse_assemblies(args.assembly_tsv)}
+
 
     sample_set = SampleSet()
-    sample_set.samples += parse_assemblies(args.assembly_tsv)
+    # sample_set.samples += parse_assemblies(args.assembly_tsv)
+    sample_set.samples += (assembly.get_sample() for assembly in assemblies.values())
 
     print(lxml.etree.tostring(sample_set.toxml()).decode())
 
     response = sub.submit(sample_set)
     print(response)
 
+
+    print(assemblies)
+    for biosample in response.objects:
+        assembly = assemblies.get(biosample.alias)
+        if assembly is not None:
+            print(Manifest.from_assembly(assembly, ena_study, biosample.accession,))
+            print("-----------------------------------------------------")
+
     return None
 
-    for study in parse_studies(args.study_tsv):
-        response = sub.submit(study)
-        print(response)
 
     # curl -u 'user:password' -F "SUBMISSION=@submission.xml" -F "STUDY=@study3.xml" "https://wwwdev.ebi.ac.uk/ena/submit/drop-box/submit/"
 
