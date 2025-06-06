@@ -1,5 +1,8 @@
-import lxml.etree, lxml.builder
+import copy
+import json
 import requests
+
+import lxml.etree, lxml.builder
 
 from dataclasses import dataclass, field
 from io import StringIO
@@ -62,6 +65,17 @@ class SubmissionResponse:
 
         return cls(**d)
 
+    def to_json(self):
+        d = copy.deepcopy(self.__dict__)
+        d['objects'] = [o.__dict__ for o in d['objects']]
+
+        return json.dumps(d)
+    
+    @classmethod
+    def from_json(cls, json_str):
+        obj = SubmissionResponse(**json.loads(json_str))
+        obj.objects = [SubmissionResponseObject(**o) for o in obj.objects]
+        return obj
 
 
 class Submission:

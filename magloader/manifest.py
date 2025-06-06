@@ -13,7 +13,7 @@ class Manifest:
 	fasta: str = None
 	coverage: int = None
 
-	def totxt(self):
+	def to_str(self):
 		return "\n".join(
 			f"{k.upper()}   {v}"	
 			for k, v in self.__dict__.items()
