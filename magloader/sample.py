@@ -1,11 +1,8 @@
 from dataclasses import dataclass
-from io import StringIO
 
-import lxml.etree, lxml.builder
-import requests
+import lxml.builder
 
-# from submission import generate_submission
-from .submission import SubmissionResponse,  SubmissionResponseObject
+from .submission import SubmissionResponseObject
 
 
 DESCRIPTION = "SPIRE v01 sample. This is a virtual sample, derived from {sample_list}."
@@ -27,7 +24,7 @@ class SampleSet:
         )
 
         return doc
-    
+
     @staticmethod
     def parse_submission_response(response):
         yield from Sample.parse_submission_response(response)
@@ -48,16 +45,16 @@ class Sample:
 
     def get_description(self):
         return DESCRIPTION.format(sample_list=self.biosamples)
-    
+
     def get_title(self):
         return TITLE.format(sample_id=self.sample_id)
-    
+
     def get_biosamples(self):
         yield from self.biosamples.strip().split(";")
 
     def get_taxon_id(self):
         return "256318"
-    
+
     def toxml(self):
         maker = lxml.builder.ElementMaker()
 
@@ -120,13 +117,13 @@ class Sample:
 
         for sample in response.findall("SAMPLE"):
 
-            d = dict(
-                object_type="sample",
-                alias=sample.attrib.get("alias"),
-                status=sample.attrib.get("status"),
-                hold_until=sample.attrib.get("holdUntilDate"),
-                accession=sample.attrib.get("accession"),
-            )            
+            d = {
+                "object_type": "sample",
+                "alias": sample.attrib.get("alias"),
+                "status": sample.attrib.get("status"),
+                "hold_until": sample.attrib.get("holdUntilDate"),
+                "accession": sample.attrib.get("accession"),
+            }
 
             ext_id = sample.find("EXT_ID")
             d["ext_accession"] = ext_id.attrib.get("accession") if ext_id is not None else None

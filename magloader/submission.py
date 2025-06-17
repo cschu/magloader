@@ -2,10 +2,10 @@ import copy
 import json
 import requests
 
-import lxml.etree, lxml.builder
-
 from dataclasses import dataclass, field
 from io import StringIO
+
+import lxml.etree, lxml.builder
 
 
 @dataclass
@@ -53,7 +53,7 @@ class SubmissionResponse:
             "receipt_date": tree.attrib.get("receiptDate"),
             "objects": list(obj_type.parse_submission_response(tree)),
         }
-        
+
         submission = tree.find("SUBMISSION")
         if submission is not None:
             d["submission_accession"] = submission.attrib.get("accession")
@@ -70,7 +70,7 @@ class SubmissionResponse:
         d['objects'] = [o.__dict__ for o in d['objects']]
 
         return json.dumps(d)
-    
+
     @classmethod
     def from_json(cls, json_str):
         obj = SubmissionResponse(**json.loads(json_str))
@@ -88,7 +88,7 @@ class Submission:
 
     def get_auth(self):
         return self.user, self.pw
-    
+
     def submit(self, obj):
         # requests.post(url, files={"SUBMISSION": open("submission.xml", "rb"), "STUDY": open("study3.xml", "rb")}, auth=(webin, pw))
         url = f"https://www{('', 'dev')[self.dev]}.ebi.ac.uk/ena/submit/drop-box/submit/"

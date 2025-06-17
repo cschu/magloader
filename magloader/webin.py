@@ -15,7 +15,7 @@ class EnaWebinClient:
     def __init__(self, username, password):
         self.username = username
         self.password = password
-    
+
     def _run_client(self, manifest, validate=True, dev=True,):
         mode = "-validate" if validate else "-submit"
         server = "-test" if dev else ""
@@ -28,10 +28,10 @@ class EnaWebinClient:
             raise
 
         return proc
-    
+
     def _evaluate_report(self):
         # 2025-06-06T12:55:57 INFO : Submission(s) validated successfully.
-        with open("webin-cli.report", "rt") as report:
+        with open("webin-cli.report", "rt", encoding="UTF-8",) as report:
             for i, line in enumerate(report, start=1):
                 logitem = LOGLINE_RE.match(line)
                 if not logitem:
@@ -42,13 +42,9 @@ class EnaWebinClient:
                         event, message = logitem.group(2), logitem.group(3)
                     except IndexError:
                         raise ValueError(f"Log-line {line} has weird format!")
-                
+
                 yield i, event, message
-                
 
-
-                
-    
     def validate(self, manifest, dev=True,):
         try:
             proc = self._run_client(manifest, validate=True, dev=dev,)
@@ -82,4 +78,3 @@ class EnaWebinClient:
 
         # print(*messages, sep="\n")
         return None, messages
-            

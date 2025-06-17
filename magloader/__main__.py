@@ -11,7 +11,7 @@ import lxml.etree
 
 from .assembly import Assembly
 from .manifest import Manifest
-from .sample import Sample, SampleSet
+from .sample import SampleSet
 from .study import Study
 from .submission import Submission, SubmissionResponse
 from .webin import get_webin_credentials, EnaWebinClient
@@ -29,29 +29,12 @@ def working_directory(path):
         os.chdir(prev_cwd)
 
 
-def parse_studies(f):
-    with open(f, "rt", encoding="UTF-8") as _in:
-        for study_data in csv.DictReader(_in, delimiter="\t"):
-            study = Study(**study_data)
-            print(study)
-            yield study
-
-
-    
 def parse_assemblies(f):
     with open(f, "rt", encoding="UTF-8") as _in:
         for i, assembly_data in enumerate(csv.DictReader(_in, delimiter="\t"), start=1):
             if i > 2:
                 break
             assembly = Assembly(**assembly_data)
-            # sample = Sample(
-            #     **{
-            #         k: v
-            #         for k, v in assembly_data.items()
-            #         if k in Sample.__match_args__
-            #     }
-            # )
-            # yield sample
             yield assembly
 
 def register_object(user, pw, obj, obj_type, workdir="work", hold_date=None, dev=True,):
@@ -70,64 +53,14 @@ def register_object(user, pw, obj, obj_type, workdir="work", hold_date=None, dev
         response = sub.submit(obj)
         with open(obj_json, "wt") as _out:
             _out.write(response.to_json())
-    
+
     print(response)
     yield from response.objects
-
-
-# def register_study(user, pw, study_tsv, workdir="work", hold_date=None, dev=True):
-#     study_json = workdir / "study.json"
-#     response = None
-#     if study_json.is_file():
-#         with open(study_json, "rt") as _in:
-#             try:
-#                 response = SubmissionResponse.from_json(_in.read())
-#             except Exception as err:
-#                 print("Reading study submission failed.\n\n", err )
-#                 response = None
-    
-#     if response is None:
-#         sub = Submission(user, pw, hold_date=hold_date, dev=dev)
-#         for study in parse_studies(study_tsv):
-#             response = sub.submit(study)
-#             with open(study_json, "wt") as _out:
-#                 _out.write(response.to_json())
-
-#     print(response)
-#     return response.objects[0].accession
-
-# def register_samples(user, pw, sample_set, workdir="work", hold_date=None, dev=True):
-#     sample_json = workdir / "samples.json"
-#     response = None
-#     if sample_json.is_file():
-#         with open(sample_json, "rt") as _in:
-#             try:
-#                 response = SubmissionResponse.from_json(_in.read())
-#             except Exception as err:
-#                 print("Reading sample submission failed.\n\n", err )
-#                 response = None
-
-#     if response is None:
-#         sub = Submission(user, pw, hold_date=hold_date, dev=dev)
-#         response = sub.submit(sample_set)
-#         with open(sample_json, "wt") as _out:
-#             _out.write(response.to_json())
-
-#     print(response)
-#     yield from response.objects
-
-            
-
 
 
 def main():
     ap = argparse.ArgumentParser()
 
-    # ap.add_argument("study_tsv", type=str)
-    # ap.add_argument("study_id", type=str)
-    # ap.add_argument("study_name", type=str)
-    # ap.add_argument("study_accessions", type=str)
-    # ap.add_argument("assembly_tsv", type=str)
     ap.add_argument("study_json", type=str)
     ap.add_argument("webin_credentials", type=str)
     ap.add_argument("--override", action="store_true",)  # not used at the moment
@@ -143,9 +76,6 @@ def main():
     user, pw = get_webin_credentials(args.webin_credentials)
     webin_client = EnaWebinClient(user, pw)
 
-
-    rundir = pathlib.Path.cwd()
-
     workdir = pathlib.Path(args.workdir)
     if workdir.is_dir():
         if args.override:
@@ -153,7 +83,7 @@ def main():
     else:
         workdir.mkdir(parents=True)
 
-    with open(args.study_json, "rt") as json_in:
+    with open(args.study_json, "rt", encoding="UTF-8",) as json_in:
         study_data = json.load(json_in)
 
     print(study_data)
@@ -171,7 +101,6 @@ def main():
         print(study_obj)
 
         # register bioproject
-        # studies = register_object(user, pw, list(parse_studies(args.study_tsv))[0], "study", workdir=workdir, hold_date=args.hold_date)
         studies = register_object(user, pw, study_obj, "study", workdir=workdir, hold_date=args.hold_date, dev=run_on_dev_server,)
         studies = list(studies)
         print(*studies, sep="\n")
