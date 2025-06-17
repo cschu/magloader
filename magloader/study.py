@@ -9,16 +9,20 @@ from .submission import SubmissionResponse, SubmissionResponseObject
 
 
 DESCRIPTION = """
-Third Party Annotations (TPA) derived from {raw_data_projects}
-as part of the SPIRE database v01 where the data
-is accessible under study {study_id}.
+Third Party Annotations (TPA) derived from dataset{multiple_datasets} {raw_data_projects}
+as part of the SPIRE database v01,
+where the data is accessible under study '{study_name}'.
 This project bundles data on metagenomic assemblies
-(using MEGAHIT v1.2.9) and derived metagenome-assembled genomes.
-Data was processed using the SPIRE pipeline v1.0.0.
+(using {assembler} {assembler_version}) and derived metagenome-assembled genomes.
+Data was processed using the {pipeline} {pipeline_version}.
 Please see {url} for additional information.""".strip()
 
 TITLE = """
-SPIRE v01 TPA metagenomic analyses (assembly & MAGs) of project {study_id}
+SPIRE v01 TPA metagenomic analyses (assembly & MAGs) of project {study_name}
+""".strip()
+
+SPIRE_LINK = """
+https://spire.embl.de/study/{study_id}
 """.strip()
 
 
@@ -26,28 +30,44 @@ SPIRE v01 TPA metagenomic analyses (assembly & MAGs) of project {study_id}
 @dataclass
 class Study:
     study_id: str = None
-    title: str = None
+    study_name: str = None
+    # title: str = None
     raw_data_projects: str = None
-    spire_study_link: str = None
-    description: str = None
-    center_name: str = None
-    study_keyword: str = None
-    new_study_type: str = None
+    # spire_study_link: str = None
+    # description: str = None
+    center_name: str = "EMBL Heidelberg"
+    study_keyword: str = "TPA:assembly"
+    new_study_type: str = "Metagenomic assembly"
+    assembler: str = "MEGAHIT"
+    assembler_version: str = "v1.2.9"
+    pipeline: str = "SPIRE pipeline"
+    pipeline_version: str = "v1.0.0"
+
+
 
     def __post_init__(self):
-        self.study_id = self.title.strip().split(" ")[-1]
-        print(f"{self.study_id=}")
+        # self.study_id = self.title.strip().split(" ")[-1]
+        # print(f"{self.study_id=}")
+        ...
+    def get_spire_link(self):
+        return SPIRE_LINK.format(study_id=self.study_id)
 
     def get_description(self):
         return DESCRIPTION.format(
             raw_data_projects=self.raw_data_projects,
-            study_id=self.study_id,
-            url=self.spire_study_link,
+            study_name=self.study_name,
+            url=self.get_spire_link(),
+            assembler=self.assembler,
+            assembler_version=self.assembler_version,
+            pipeline=self.pipeline,
+            pipeline_version=self.pipeline_version,
+            multiple_datasets="s" if "," in self.raw_data_projects else "",
         ).replace("\n", " ")
     def get_title(self):
-        return TITLE.format(study_id=self.study_id)
+        # return TITLE.format(study_id=self.study_id)
+        return TITLE.format(study_name=self.study_name)
     def get_raw_data_projects(self):
-        yield from self.raw_data_projects.strip().split(";")
+        yield from self.raw_data_projects.strip().split(",")
 
     def toxml(self):
         maker = lxml.builder.ElementMaker()
@@ -84,7 +104,7 @@ class Study:
                     study_link(
                         url_link(
                             label("SPIRE"),
-                            url(self.spire_study_link),
+                            url(self.get_spire_link()),
                         )
                     ),
                     *(
@@ -103,7 +123,7 @@ class Study:
                         value(self.study_keyword),
                     )
                 ),
-                alias=self.study_id,
+                alias=f"spire_study_{self.study_id}",
                 center_name=self.center_name,
             )
         )
