@@ -5,3 +5,4 @@ __pycache__/
 build/
 webin-cli.report
 *.fasta.gz*
+db.json
