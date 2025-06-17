@@ -35,11 +35,13 @@ class EnaWebinClient:
             for i, line in enumerate(report, start=1):
                 logitem = LOGLINE_RE.match(line)
                 if not logitem:
-                    raise ValueError("Cannot parse webin-cli.report!")
-                try:
-                    event, message = logitem.group(2), logitem.group(3)
-                except IndexError:
-                    raise ValueError(f"Log-line {line} has weird format!")
+                    # raise ValueError("Cannot parse webin-cli.report!")
+                    event, message = "UNKNOWN", line
+                else:
+                    try:
+                        event, message = logitem.group(2), logitem.group(3)
+                    except IndexError:
+                        raise ValueError(f"Log-line {line} has weird format!")
                 
                 yield i, event, message
                 
@@ -68,7 +70,7 @@ class EnaWebinClient:
             raise
 
         print(proc)
-        messages = list(self._evaluate_report)
+        messages = list(self._evaluate_report())
         for _, event, msg in messages:
             if event.strip() == "ERROR":
                 break
