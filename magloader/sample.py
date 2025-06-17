@@ -10,7 +10,7 @@ from .submission import SubmissionResponse,  SubmissionResponseObject
 
 DESCRIPTION = "SPIRE v01 sample. This is a virtual sample, derived from {sample_list}."
 
-TITLE = "SPIRE v01 sample {sample_id}."
+TITLE = "SPIRE v01 sample spire_sample_{sample_id}."
 
 class SampleSet:
     def __init__(self):
@@ -39,11 +39,12 @@ class Sample:
     # spire_ena_project_id	sample_id	assembly_name	assembly_type	program	description	file_path
     spire_ena_project_id: str = None
     sample_id: str = None
-    description: str = None
+    # description: str = None
     biosamples: str = None
 
     def __post_init__(self):
-        self.biosamples = self.description.split(" ")[-1].strip(".")
+        # self.biosamples = self.description.split(" ")[-1].strip(".")
+        ...
 
     def get_description(self):
         return DESCRIPTION.format(sample_list=self.biosamples)
@@ -95,16 +96,21 @@ class Sample:
                 *(
                     sample_link(
                         xref_link(
-                        db("BIOSAMPLE"), id_(bs)
+                            db("BIOSAMPLE"), id_(bs)
                         )
                     )
                     for bs in self.get_biosamples()
-                )
+                ),
+                sample_link(
+                    xref_link(
+                        db("BIOPROJECT"), id_(self.spire_ena_project_id)
+                    )
+                ),
             ),
             sample_attributes(
                 *attributes
             ),
-            alias=self.sample_id,
+            alias=f"spire_sample_{self.sample_id}",
         )
 
         return doc
