@@ -7,3 +7,4 @@ webin-cli.report
 *.fasta.gz*
 db.json
 user_data.txt
+work/
