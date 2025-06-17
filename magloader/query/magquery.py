@@ -8,11 +8,12 @@ import psycopg2
 def main():
 	ap = argparse.ArgumentParser()
 	ap.add_argument("study_id", type=str)
+	ap.add_argument("db_json", type=str)
 	args = ap.parse_args()
 
 	
 
-	with open("db.json", "rt") as json_in:
+	with open(args.db_json, "rt") as json_in:
 		db = json.load(json_in)
 
 	connection = psycopg2.connect(**db)
