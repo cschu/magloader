@@ -45,18 +45,20 @@ with open(path.join(here, "DESCRIPTION.md"), encoding="utf-8") as description:
 		install_requires=[
 			'lxml',
 			'requests',
-			"setuptools>=61.0,<69",		
+			'psycopg2-binary',
+			"setuptools>=61.0,<69",
 		],
 		zip_safe=False,
 		keywords="ena mag upload",
 		packages=find_packages(exclude=["test"]),
 		package_data={},
 		include_package_data=True,
-		entry_points={
-			"console_scripts": [
-				"magloader=magloader.__main__:main",				
-			],
-		},
+			entry_points={
+				"console_scripts": [
+					"magloader=magloader.__main__:main",
+					"magquery=magloader.query.magquery:main",
+				],
+			},
 		data_files=[],
 	)
 
