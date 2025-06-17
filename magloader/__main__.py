@@ -134,8 +134,11 @@ def main():
     ap.add_argument("--workdir", "-w", type=str, default="work")
     ap.add_argument("--hold_date", type=str, default="2025-12-31")
     ap.add_argument("--dryruns", type=int, default=0)
+    ap.add_argument("--ena_live", action="store_true")
 
     args = ap.parse_args()
+
+    run_on_dev_server = not args.ena_live
 
     user, pw = get_webin_credentials(args.webin_credentials)
     webin_client = EnaWebinClient(user, pw)
@@ -169,7 +172,7 @@ def main():
 
         # register bioproject
         # studies = register_object(user, pw, list(parse_studies(args.study_tsv))[0], "study", workdir=workdir, hold_date=args.hold_date)
-        studies = register_object(user, pw, study_obj, "study", workdir=workdir, hold_date=args.hold_date)
+        studies = register_object(user, pw, study_obj, "study", workdir=workdir, hold_date=args.hold_date, dev=run_on_dev_server,)
         studies = list(studies)
         print(*studies, sep="\n")
 
@@ -182,7 +185,7 @@ def main():
     assemblies = {
         f"spire_sample_{assembly['sample_id']}": Assembly(**assembly, spire_ena_project_id=study_id)
         for i, assembly in enumerate(study_data["assemblies"])
-        if args.dryruns <= 0 or i < args.dryruns
+        if not run_on_dev_server or (args.dryruns <= 0 or i < args.dryruns)
     }
 
     sample_json = workdir / "sample.json"
@@ -199,7 +202,7 @@ def main():
         print(lxml.etree.tostring(sample_set.toxml()).decode())
 
         # register biosamples
-        biosamples = register_object(user, pw, sample_set, "sample", workdir=workdir, hold_date=args.hold_date)
+        biosamples = register_object(user, pw, sample_set, "sample", workdir=workdir, hold_date=args.hold_date, dev=run_on_dev_server,)
         biosamples = list(biosamples)
         biosamples = [(obj.accession, obj.alias) for obj in biosamples]
 
@@ -221,9 +224,9 @@ def main():
                         print(manifest.to_str(), file=_out,)
                 print(manifest)
 
-                is_valid, messages = webin_client.validate(manifest_file, dev=True,)
+                is_valid, messages = webin_client.validate(manifest_file, dev=run_on_dev_server,)
                 if is_valid:
-                    ena_id, messages = webin_client.submit(manifest_file, dev=True,)
+                    ena_id, messages = webin_client.submit(manifest_file, dev=run_on_dev_server,)
                     if ena_id:
                         messages = []
                         print("ENA-ID", ena_id,)
