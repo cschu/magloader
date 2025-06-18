@@ -45,7 +45,8 @@ class SubmissionResponse:
 
     @classmethod
     def from_xml(cls, xml, obj_type):
-        xml = "\n".join(line for line in xml.text.strip().split("\n") if line[:5] != "<?xml")
+        # xml = "\n".join(line for line in xml.text.strip().split("\n") if line[:5] != "<?xml")
+
         tree = lxml.etree.fromstring(xml)
 
         d = {
@@ -91,20 +92,38 @@ class Submission:
 
     def submit(self, obj):
         # requests.post(url, files={"SUBMISSION": open("submission.xml", "rb"), "STUDY": open("study3.xml", "rb")}, auth=(webin, pw))
+        # curl -u 'user:password' -F "SUBMISSION=@submission.xml" -F "STUDY=@study3.xml" "https://wwwdev.ebi.ac.uk/ena/submit/drop-box/submit/"
         url = f"https://www{('', 'dev')[self.dev]}.ebi.ac.uk/ena/submit/drop-box/submit/"
+
+        submission_xml = Submission.generate_submission(hold_date=self.hold_date)
+        with open("submission.xml", "wt") as _out:
+            _out.write(submission_xml)
+
+        obj_xml = obj.toxml()
+
+        # obj_xml = lxml.etree.tostring(obj.toxml()).decode()
+        with open(f"{obj.__class__.__name__.lower()}.xml", "wb") as _out:
+            _out.write(lxml.etree.tostring(obj_xml, pretty_print=True,))
+
         response = requests.post(
             url,
             files={
-                "SUBMISSION": StringIO(Submission.generate_submission(hold_date=self.hold_date)),
-                obj.__class__.__name__.upper().replace("SET", ""): StringIO(
-                    lxml.etree.tostring(obj.toxml()).decode()
-                ),
+                # "SUBMISSION": StringIO(Submission.generate_submission(hold_date=self.hold_date)),
+                "SUBMISSION": StringIO(submission_xml),
+                # obj.__class__.__name__.upper().replace("SET", ""): StringIO(
+                #     lxml.etree.tostring(obj.toxml()).decode()
+                # ),
+                obj.__class__.__name__.upper().replace("SET", ""): StringIO(lxml.etree.tostring(obj_xml).decode()),
             },
             auth=self.get_auth(),
             timeout=self.timeout,
         )
 
-        return SubmissionResponse.from_xml(response, obj.__class__)
+        response_xml = "\n".join(line for line in response.text.strip().split("\n") if line[:5] != "<?xml")
+        with open(f"{obj.__class__.__name__.lower()}_ena_response.xml", "wt") as _out:
+            _out.write(response_xml)
+
+        return SubmissionResponse.from_xml(response_xml, obj.__class__)
 
 
     @staticmethod

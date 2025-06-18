@@ -7,12 +7,12 @@ from .submission import SubmissionResponseObject
 
 DESCRIPTION = """
 Third Party Annotations (TPA) derived from dataset{multiple_datasets} {raw_data_projects}
-as part of the SPIRE database v01,
-where the data is accessible under study '{study_name}'.
+as part of the SPIRE database v01.
 This project bundles data on metagenomic assemblies
 (using {assembler} {assembler_version}) and derived metagenome-assembled genomes.
 Data was processed using the {pipeline} {pipeline_version}.
-Please see {url} for additional information.""".strip()
+The project is accessible under {url}.
+""".strip()
 
 TITLE = """
 SPIRE v01 TPA metagenomic analyses (assembly & MAGs) of project {study_name}
