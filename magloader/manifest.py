@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 
 DESCRIPTION = """
-SPIRE v01 primary metagenome assembly for {accessions}. For more details see https://spire.embl.de/genome/{sample_id}
+SPIRE v01 primary metagenome assembly for {accessions}. For more details see https://spire.embl.de/spire/v1/genome/{sample_id}
 """.strip()
 
 @dataclass

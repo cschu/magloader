@@ -82,7 +82,7 @@ def main():
 
     study_id = None
 
-    study_obj = Study(study_id=study_data["study_id"], study_name=study_data["study_name"], raw_data_projects=study_data["accessions"],)
+    study_obj = Study(study_id=study_data["study_id"], raw_data_projects=study_data["accessions"],)
     print(study_obj)
 
     # register bioproject

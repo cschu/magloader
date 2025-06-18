@@ -19,7 +19,7 @@ SPIRE v01 TPA metagenomic analyses (assembly & MAGs) of project {study_name}
 """.strip()
 
 SPIRE_LINK = """
-https://spire.embl.de/study/{study_id}
+https://spire.embl.de/spire/v1/study/{study_id}
 """.strip()
 
 
@@ -28,10 +28,7 @@ https://spire.embl.de/study/{study_id}
 class Study:
     study_id: str = None
     study_name: str = None
-    # title: str = None
     raw_data_projects: str = None
-    # spire_study_link: str = None
-    # description: str = None
     center_name: str = "EMBL Heidelberg"
     study_keyword: str = "TPA:assembly"
     new_study_type: str = "Metagenomic assembly"
@@ -43,9 +40,8 @@ class Study:
 
 
     def __post_init__(self):
-        # self.study_id = self.title.strip().split(" ")[-1]
-        # print(f"{self.study_id=}")
-        ...
+        self.study_name = f"spire_study_{self.study_id}"
+
     def get_spire_link(self):
         return SPIRE_LINK.format(study_id=self.study_id)
 
@@ -61,7 +57,6 @@ class Study:
             multiple_datasets="s" if "," in self.raw_data_projects else "",
         ).replace("\n", " ")
     def get_title(self):
-        # return TITLE.format(study_id=self.study_id)
         return TITLE.format(study_name=self.study_name)
     def get_raw_data_projects(self):
         yield from self.raw_data_projects.strip().split(",")
