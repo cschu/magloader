@@ -6,6 +6,9 @@ import json
 import os
 import pathlib
 
+from functools import partial
+from multiprocessing import Pool
+
 import lxml.etree
 
 from .assembly import Assembly
@@ -13,19 +16,11 @@ from .manifest import Manifest
 from .sample import SampleSet
 from .study import Study
 from .submission import Submission, SubmissionResponse
+from .upload import check_assemblies, prepare_manifest_files, process_manifest
 from .webin import get_webin_credentials, EnaWebinClient
+from .workdir import working_directory
 
 
-@contextlib.contextmanager
-def working_directory(path):
-    # https://stackoverflow.com/questions/41742317/how-can-i-change-directory-with-python-pathlib
-    """Changes working directory and returns to previous on exit."""
-    prev_cwd = pathlib.Path.cwd()
-    os.chdir(path)
-    try:
-        yield
-    finally:
-        os.chdir(prev_cwd)
 
 
 def register_object(user, pw, obj, obj_type, hold_date=None, dev=True,):
@@ -60,6 +55,7 @@ def main():
     ap.add_argument("--hold_date", type=str, default="2025-12-31")
     ap.add_argument("--dryruns", type=int, default=0)
     ap.add_argument("--ena_live", action="store_true")
+    ap.add_argument("--threads", type=int, default=1)
 
     args = ap.parse_args()
 
@@ -122,6 +118,41 @@ def main():
 
     # validate and submit assemblies
     print(assemblies)
+
+    assemblies = list(check_assemblies(biosamples, assemblies))
+    manifests = list(prepare_manifest_files(study_id, assemblies, workdir))
+
+    process_manifest_partial = partial(process_manifest, user=user, password=pw, run_on_dev_server=run_on_dev_server,)
+    
+    if args.threads == 1:
+        for manifest_file in manifests:
+            # ena_id, messages = process_manifest(manifest_file, user, pw, run_on_dev_server=run_on_dev_server,)
+            ena_id, messages = process_manifest_partial(manifest_file)
+            if ena_id is not None:
+                print("ENA-ID", ena_id,)
+            else:
+                print(*messages, sep="\n",)
+            print("-----------------------------------------------------")
+    else:
+        with Pool(processes=args.threads) as pool:
+            results = pool.apply_async(process_manifest_partial, manifests)
+
+            for ena_id, messages in results.get():
+                if ena_id is not None:
+                    print("ENA-ID", ena_id,)
+                else:
+                    print(*messages, sep="\n",)
+                print("-----------------------------------------------------")
+
+
+    
+    return None
+        
+
+
+                     
+
+
     for biosample in biosamples:
         assembly = assemblies.get(biosample.alias)
         if assembly is None:
