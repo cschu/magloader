@@ -78,7 +78,7 @@ def main():
         try:
             coverage = float(coverage)
         except:
-            coverage = 1.0
+            coverage = -1.0
         assemblies.setdefault(sample_id, {}).update(
             {
                 "sample_id": sample_id,			
