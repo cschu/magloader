@@ -1,5 +1,7 @@
 import argparse
 import json
+import os
+import pathlib
 import pprint
 
 import psycopg2
@@ -10,7 +12,11 @@ def main():
     ap.add_argument("study_id", type=str)
     ap.add_argument("db_json", type=str)
     ap.add_argument("--spire_version", type=int, choices=(1,2,), default=1)
+    ap.add_argument("--assembly_dir", type=str, default="assemblies")
     args = ap.parse_args()
+
+    assembly_dir = pathlib.Path(args.assembly_dir)
+    assembly_dir.mkdir(exist_ok=True, parents=True,)
 
     with open(args.db_json, "rt", encoding="UTF-8",) as json_in:
         db = json.load(json_in)
@@ -79,13 +85,20 @@ def main():
             coverage = float(coverage)
         except:
             coverage = -1.0
+
+        assembly_path = assembly_dir / f"{sample_name}-assembled.fa.gz"
+        try:
+            assembly_path.symlink_to(f"/g/scb/bork/data/spire/studies/{args.study_id}/psa_megahit/assemblies/{sample_name}-assembled.fa.gz")
+        except FileExistsError:
+            pass
+
         assemblies.setdefault(sample_id, {}).update(
             {
                 "sample_id": sample_id,			
                 "program": program,
                 "program_version": program_version,
                 "coverage": float(coverage),
-                "file_path": f"/g/scb/bork/data/spire/studies/{args.study_id}/psa_megahit/assemblies/{sample_name}-assembled.fa.gz"
+                "file_path": str(assembly_path.absolute()),
             }
         )
         assemblies[sample_id].setdefault("biosamples", []).append(sample_name)
