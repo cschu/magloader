@@ -9,6 +9,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("study_id", type=str)
     ap.add_argument("db_json", type=str)
+    ap.add_argument("--spire_version", type=int, choices=(1,2,), default=1)
     args = ap.parse_args()
 
     with open(args.db_json, "rt", encoding="UTF-8",) as json_in:
@@ -40,27 +41,44 @@ def main():
         in cursor.fetchall()
     )
 
+    if args.spire_version == 1:
+        assembly_query = "'null'"
+        software_query = "'megahit'"
+        software_version_query = "'1.2.9'"
+        assembly_join = ""
+        software_join = ""
+    else:
+        assembly_query = "assemblies.id as assembly_id"
+        software_query = "software.software_name"
+        software_version_query = "software.software_version"
+        assembly_join = "JOIN assemblies on samples.id = assemblies.sample_id "
+        software_join = "JOIN software on assemblies.assembler = software.id "
+
+    
     cursor.execute(
-        "" \
-        "SELECT " \
-        "samples.id as sample_id, " \
-        "samples.sample_name, " \
-        "assemblies.id as assembly_id, " \
-        "software.software_name, " \
-        "software.software_version, " \
-        "ena.sample_accession, " \
-        "average_coverage.avg_coverage " \
-        "FROM " \
-        "samples " \
-        "JOIN assemblies on samples.id = assemblies.sample_id " \
-        "JOIN software on assemblies.assembler=software.id " \
-        "JOIN ena on ena.sample_id=samples.id " \
-        "JOIN average_coverage on average_coverage.sample_id = samples.id " \
+        "SELECT "
+        "samples.id as sample_id, "
+        "samples.sample_name, "
+        f"{assembly_query}, "
+        f"{software_query}, "
+        f"{software_version_query}, "
+        "ena.sample_accession, "
+        "average_coverage.avg_coverage "
+        "FROM "
+        "samples "
+        f"{assembly_join}"
+        f"{software_join}"
+        "JOIN ena on ena.sample_id = samples.id "
+        "LEFT OUTER JOIN average_coverage on average_coverage.sample_id = samples.id "
         f"WHERE samples.study_id = {args.study_id};"
     )
 
     assemblies = {}
     for sample_id, sample_name, assembly_id, program, program_version, sample_accession, coverage in cursor.fetchall():
+        try:
+            coverage = float(coverage)
+        except:
+            coverage = -1.0
         assemblies.setdefault(sample_id, {}).update(
             {
                 "sample_id": sample_id,			
