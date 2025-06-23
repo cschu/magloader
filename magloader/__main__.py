@@ -122,7 +122,8 @@ def main():
     assemblies = list(check_assemblies(biosamples, assemblies))
     manifests = list(prepare_manifest_files(study_id, assemblies, workdir))
 
-    process_manifest_partial = partial(process_manifest, user=user, password=pw, run_on_dev_server=run_on_dev_server,)
+    process_manifest_partial = partial(process_manifest, user=user, password=pw, submit=True, run_on_dev_server=run_on_dev_server,)
+    print(process_manifest_partial)
     
     if args.threads == 1:
         for manifest_file in manifests:
@@ -135,9 +136,9 @@ def main():
             print("-----------------------------------------------------")
     else:
         with Pool(processes=args.threads) as pool:
-            results = pool.apply_async(process_manifest_partial, manifests)
+            results = [pool.apply_async(process_manifest_partial, (manifest,)) for manifest in manifests]
 
-            for ena_id, messages in results.get():
+            for ena_id, messages in [res.get() for res in results]:
                 if ena_id is not None:
                     print("ENA-ID", ena_id,)
                 else:

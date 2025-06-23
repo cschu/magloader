@@ -26,14 +26,16 @@ def prepare_manifest_files(study_id, assemblies, workdir):
                     manifest = Manifest.from_assembly(assembly, study_id, biosample_accession)
                     print(manifest.to_str(), file=_out,)
                 print(manifest)
-                yield manifest_file
+            yield manifest_file
                 
 def process_manifest(manifest_file, user, password, submit=True, run_on_dev_server=False,):
+    #print(manifest_file)
+    print(*locals().items())
     webin_client = EnaWebinClient(user, password)
-    with working_directory(manifest_file.parent):
-        is_valid, messages = webin_client.validate(manifest_file, dev=run_on_dev_server,)
+    with working_directory(pathlib.Path(manifest_file).parent):
+        is_valid, messages = webin_client.validate(manifest_file.name, dev=run_on_dev_server,)
         if is_valid and submit:
-            ena_id, messages = webin_client.submit(manifest_file, dev=run_on_dev_server,)
+            ena_id, messages = webin_client.submit(manifest_file.name, dev=run_on_dev_server,)
             if ena_id:
                 pathlib.Path("DONE").touch()
                 return ena_id, []
