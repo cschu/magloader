@@ -41,23 +41,35 @@ def main():
         in cursor.fetchall()
     )
 
+    if args.spire_version == 1:
+        assembly_query = "'null'"
+        software_query = "'megahit'"
+        software_version_query = "'1.2.9'"
+        assembly_join = ""
+        software_join = ""
+    else:
+        assembly_query = "assemblies.id as assembly_id"
+        software_query = "software.software_name"
+        software_version_query = "software.software_version"
+        assembly_join = "JOIN assemblies on samples.id = assemblies.sample_id "
+        software_join = "JOIN software on assemblies.assembler = software.id "
+
     
     cursor.execute(
-        "" \
-        "SELECT " \
-        "samples.id as sample_id, " \
-        "samples.sample_name, " \
-        "assemblies.id as assembly_id, " if args.spire_version != 1 else "'null', " \
-        "software.software_name, " if args.spire_version != 1 else "'megahit', "\
-        "software.software_version, " if args.spire_version != 1 else "'1.2.9', " \
-        "ena.sample_accession, " \
-        "average_coverage.avg_coverage " \
-        "FROM " \
-        "samples " \
-        "JOIN assemblies on samples.id = assemblies.sample_id " if args.spire_version != 1 else "" \
-        "JOIN software on assemblies.assembler=software.id " if args.spire_version != 1 else "" \
-        "JOIN ena on ena.sample_id=samples.id " \
-        "JOIN average_coverage on average_coverage.sample_id = samples.id " \
+        "SELECT "
+        "samples.id as sample_id, "
+        "samples.sample_name, "
+        f"{assembly_query}, "
+        f"{software_query}, "
+        f"{software_version_query}, "
+        "ena.sample_accession, "
+        "average_coverage.avg_coverage "
+        "FROM "
+        "samples "
+        f"{assembly_join}"
+        f"{software_join}"
+        "JOIN ena on ena.sample_id = samples.id "
+        "JOIN average_coverage on average_coverage.sample_id = samples.id "
         f"WHERE samples.study_id = {args.study_id};"
     )
 
