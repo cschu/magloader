@@ -69,12 +69,16 @@ def main():
         f"{assembly_join}"
         f"{software_join}"
         "JOIN ena on ena.sample_id = samples.id "
-        "JOIN average_coverage on average_coverage.sample_id = samples.id "
+        "LEFT OUTER JOIN average_coverage on average_coverage.sample_id = samples.id "
         f"WHERE samples.study_id = {args.study_id};"
     )
 
     assemblies = {}
     for sample_id, sample_name, assembly_id, program, program_version, sample_accession, coverage in cursor.fetchall():
+        try:
+            coverage = float(coverage)
+        except:
+            coverage = 1.0
         assemblies.setdefault(sample_id, {}).update(
             {
                 "sample_id": sample_id,			
