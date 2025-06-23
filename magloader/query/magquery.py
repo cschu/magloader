@@ -9,6 +9,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("study_id", type=str)
     ap.add_argument("db_json", type=str)
+    ap.add_argument("--spire_version", type=int, choices=(1,2,), default=1)
     args = ap.parse_args()
 
     with open(args.db_json, "rt", encoding="UTF-8",) as json_in:
@@ -40,20 +41,21 @@ def main():
         in cursor.fetchall()
     )
 
+    
     cursor.execute(
         "" \
         "SELECT " \
         "samples.id as sample_id, " \
         "samples.sample_name, " \
-        "assemblies.id as assembly_id, " \
-        "software.software_name, " \
-        "software.software_version, " \
+        "assemblies.id as assembly_id, " if args.spire_version != 1 else "'null', " \
+        "software.software_name, " if args.spire_version != 1 else "'megahit', "\
+        "software.software_version, " if args.spire_version != 1 else "'1.2.9', " \
         "ena.sample_accession, " \
         "average_coverage.avg_coverage " \
         "FROM " \
         "samples " \
-        "JOIN assemblies on samples.id = assemblies.sample_id " \
-        "JOIN software on assemblies.assembler=software.id " \
+        "JOIN assemblies on samples.id = assemblies.sample_id " if args.spire_version != 1 else "" \
+        "JOIN software on assemblies.assembler=software.id " if args.spire_version != 1 else "" \
         "JOIN ena on ena.sample_id=samples.id " \
         "JOIN average_coverage on average_coverage.sample_id = samples.id " \
         f"WHERE samples.study_id = {args.study_id};"
