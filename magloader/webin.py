@@ -16,11 +16,12 @@ class EnaWebinClient:
         self.username = username
         self.password = password
 
-    def _run_client(self, manifest, validate=True, dev=True,):
+    def _run_client(self, manifest, validate=True, dev=True, java_max_heap=None,):
         mode = "-validate" if validate else "-submit"
         server = "-test" if dev else ""
-        cmd = f"ena-webin-cli -username {self.username} -password '{self.password}' -context genome -manifest {manifest} {mode} {server}"
-        print(f"CMD: `{cmd}`", cmd)
+        jvm_heap = f"-Xmx{java_max_heap}" if java_max_heap else ""
+        cmd = f"ena-webin-cli {jvm_heap} -username {self.username} -password '{self.password}' -context genome -manifest {manifest} {mode} {server}"
+        print(f"CMD: `{cmd}`")
 
         try:
             proc = subprocess.run(shlex.split(cmd), check=True, capture_output=True,)
@@ -45,9 +46,9 @@ class EnaWebinClient:
 
                 yield i, event, message
 
-    def validate(self, manifest, dev=True,):
+    def validate(self, manifest, dev=True, java_max_heap=None,):
         try:
-            proc = self._run_client(manifest, validate=True, dev=dev,)
+            proc = self._run_client(manifest, validate=True, dev=dev, java_max_heap=java_max_heap,)
         except subprocess.CalledProcessError as err:
             raise
 
@@ -59,9 +60,9 @@ class EnaWebinClient:
         # print(*messages, sep="\n")
         return False, messages
 
-    def submit(self, manifest, dev=True,):
+    def submit(self, manifest, dev=True, java_max_heap=None,):
         try:
-            proc = self._run_client(manifest, validate=False, dev=dev,)
+            proc = self._run_client(manifest, validate=False, dev=dev, java_max_heap=java_max_heap,)
         except subprocess.CalledProcessError as err:
             raise
 
