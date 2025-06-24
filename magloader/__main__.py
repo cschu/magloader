@@ -56,6 +56,7 @@ def main():
     ap.add_argument("--dryruns", type=int, default=0)
     ap.add_argument("--ena_live", action="store_true")
     ap.add_argument("--threads", type=int, default=1)
+    ap.add_argument("--java_max_heap", type=str, default=None,)
 
     args = ap.parse_args()
 
@@ -122,7 +123,13 @@ def main():
     assemblies = list(check_assemblies(biosamples, assemblies))
     manifests = list(prepare_manifest_files(study_id, assemblies, workdir))
 
-    process_manifest_partial = partial(process_manifest, user=user, password=pw, submit=True, run_on_dev_server=run_on_dev_server,)
+    process_manifest_partial = partial(
+        process_manifest,
+        user=user,
+        password=pw,
+        submit=True,
+        run_on_dev_server=run_on_dev_server,
+        java_max_heap=args.java_max_heap,)
     print(process_manifest_partial)
     
     if args.threads == 1:
