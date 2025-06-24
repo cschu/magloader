@@ -129,7 +129,8 @@ def main():
         password=pw,
         submit=True,
         run_on_dev_server=run_on_dev_server,
-        java_max_heap=args.java_max_heap,)
+        java_max_heap=args.java_max_heap,
+    )
     print(process_manifest_partial)
     
     if args.threads == 1:
