@@ -19,7 +19,7 @@ class EnaWebinClient:
     def _run_client(self, manifest, validate=True, dev=True, java_max_heap=None,):
         mode = "-validate" if validate else "-submit"
         server = "-test" if dev else ""
-        jvm_heap = "-Xmx{java_max_heap}" if java_max_heap else ""
+        jvm_heap = f"-Xmx{java_max_heap}" if java_max_heap else ""
         cmd = f"ena-webin-cli {jvm_heap} -username {self.username} -password '{self.password}' -context genome -manifest {manifest} {mode} {server}"
         print(f"CMD: `{cmd}`")
 
