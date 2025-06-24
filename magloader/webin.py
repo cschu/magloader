@@ -60,9 +60,9 @@ class EnaWebinClient:
         # print(*messages, sep="\n")
         return False, messages
 
-    def submit(self, manifest, dev=True,):
+    def submit(self, manifest, dev=True, java_max_heap=None,):
         try:
-            proc = self._run_client(manifest, validate=False, dev=dev, java_max_heap=None,)
+            proc = self._run_client(manifest, validate=False, dev=dev, java_max_heap=java_max_heap,)
         except subprocess.CalledProcessError as err:
             raise
 
