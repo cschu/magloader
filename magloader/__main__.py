@@ -134,36 +134,14 @@ def main():
     print(process_manifest_partial)
 
     with open("assembly_accessions.txt", "wt") as _out:
-        for ena_id, messages, manifest in upload(manifests, process_manifest_partial, threads=args.threads):
+        for i, ena_id, messages, manifest in upload(manifests, process_manifest_partial, threads=args.threads):
             if ena_id is not None:
-                print("ENA-ID", ena_id,)
+                print(i, i/len(manifests), "ENA-ID", ena_id,)
                 print(ena_id, manifest, sep="\t", file=_out)
             else:
-                print(*messages, sep="\n",)
+                print(i, i/len(manifests), *messages, sep="\n",)
             print("-----------------------------------------------------")
-    
-    # if args.threads == 1:
-    #     for manifest_file in manifests:
-    #         # ena_id, messages = process_manifest(manifest_file, user, pw, run_on_dev_server=run_on_dev_server,)
-    #         ena_id, messages = process_manifest_partial(manifest_file)
-    #         if ena_id is not None:
-    #             print("ENA-ID", ena_id,)
-    #         else:
-    #             print(*messages, sep="\n",)
-    #         print("-----------------------------------------------------")
-    # else:
-    #     with Pool(processes=args.threads) as pool:
-    #         results = [pool.apply_async(process_manifest_partial, (manifest,)) for manifest in manifests]
 
-    #         for ena_id, messages in [res.get() for res in results]:
-    #             if ena_id is not None:
-    #                 print("ENA-ID", ena_id,)
-    #             else:
-    #                 print(*messages, sep="\n",)
-    #             print("-----------------------------------------------------")
-
-
-    
     return None
 
 

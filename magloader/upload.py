@@ -42,12 +42,12 @@ def process_manifest(manifest_file, user, password, submit=True, run_on_dev_serv
 
 def upload(manifests, upload_f, threads=1):
     if threads == 1:
-        for manifest in manifests:
+        for i, manifest in enumerate(manifests, start=1,):
             ena_id, messages, manifest = upload_f(manifest)
             yield ena_id, messages, manifest
     else:
         with Pool(processes=threads) as pool:
             results = [pool.apply_async(upload_f, (manifest,)) for manifest in manifests]
 
-            for ena_id, messages, manifest in [res.get() for res in results]:
-                yield ena_id, messages, manifest
+            for i, (ena_id, messages, manifest) in enumerate([res.get() for res in results], start=1):
+                yield i, ena_id, messages, manifest
