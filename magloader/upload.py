@@ -44,7 +44,7 @@ def upload(manifests, upload_f, threads=1):
     if threads == 1:
         for i, manifest in enumerate(manifests, start=1,):
             ena_id, messages, manifest = upload_f(manifest)
-            yield ena_id, messages, manifest
+            yield i, ena_id, messages, manifest
     else:
         with Pool(processes=threads) as pool:
             results = [pool.apply_async(upload_f, (manifest,)) for manifest in manifests]
