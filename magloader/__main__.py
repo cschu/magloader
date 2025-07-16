@@ -16,7 +16,7 @@ from .manifest import Manifest
 from .sample import SampleSet
 from .study import Study
 from .submission import Submission, SubmissionResponse
-from .upload import check_assemblies, prepare_manifest_files, process_manifest
+from .upload import check_assemblies, prepare_manifest_files, process_manifest, upload
 from .webin import get_webin_credentials, EnaWebinClient
 from .workdir import working_directory
 
@@ -132,64 +132,15 @@ def main():
         java_max_heap=args.java_max_heap,
     )
     print(process_manifest_partial)
-    
-    if args.threads == 1:
-        for manifest_file in manifests:
-            # ena_id, messages = process_manifest(manifest_file, user, pw, run_on_dev_server=run_on_dev_server,)
-            ena_id, messages = process_manifest_partial(manifest_file)
+
+    with open("assembly_accessions.txt", "wt") as _out:
+        for i, ena_id, messages, manifest in upload(manifests, process_manifest_partial, threads=args.threads):
             if ena_id is not None:
-                print("ENA-ID", ena_id,)
+                print(i, i/len(manifests), "ENA-ID", ena_id,)
+                print(ena_id, manifest, sep="\t", file=_out)
             else:
-                print(*messages, sep="\n",)
+                print(i, i/len(manifests), *messages, sep="\n",)
             print("-----------------------------------------------------")
-    else:
-        with Pool(processes=args.threads) as pool:
-            results = [pool.apply_async(process_manifest_partial, (manifest,)) for manifest in manifests]
-
-            for ena_id, messages in [res.get() for res in results]:
-                if ena_id is not None:
-                    print("ENA-ID", ena_id,)
-                else:
-                    print(*messages, sep="\n",)
-                print("-----------------------------------------------------")
-
-
-    
-    return None
-        
-
-
-                     
-
-
-    for biosample in biosamples:
-        assembly = assemblies.get(biosample.alias)
-        if assembly is None:
-            raise ValueError(f"{biosample.alias} does not have an assembly!")
-        assembly_dir = workdir / "assemblies" / assembly.assembly_name
-        assembly_done = assembly_dir / "DONE"
-        if not assembly_done.is_file():
-            assembly_dir.mkdir(parents=True, exist_ok=True,)
-            with working_directory(assembly_dir):
-                manifest = Manifest.from_assembly(assembly, study_id, biosample.accession)
-                manifest_file = pathlib.Path(f"{assembly.assembly_name}.manifest.txt")
-                if not manifest_file.is_file():
-                    with open(manifest_file, "wt") as _out:
-                        print(manifest.to_str(), file=_out,)
-                print(manifest)
-
-                is_valid, messages = webin_client.validate(manifest_file, dev=run_on_dev_server,)
-                if is_valid:
-                    ena_id, messages = webin_client.submit(manifest_file, dev=run_on_dev_server,)
-                    if ena_id:
-                        messages = []
-                        print("ENA-ID", ena_id,)
-                        pathlib.Path("DONE").touch()
-
-                if messages:
-                    print(*messages, sep="\n",)
-
-                print("-----------------------------------------------------")
 
     return None
 

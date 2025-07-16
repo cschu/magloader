@@ -1,5 +1,7 @@
 import pathlib
 
+from multiprocessing import Pool
+
 from .manifest import Manifest
 from .webin import EnaWebinClient
 from .workdir import working_directory
@@ -11,8 +13,6 @@ def check_assemblies(biosamples, assemblies):
         if assembly is None:
             raise ValueError(f"{biosample.alias} does not have an assembly!")
         yield biosample.accession, assembly
-
-
 
 def prepare_manifest_files(study_id, assemblies, workdir):
     for biosample_accession, assembly in assemblies:
@@ -29,8 +29,6 @@ def prepare_manifest_files(study_id, assemblies, workdir):
             yield manifest_file
                 
 def process_manifest(manifest_file, user, password, submit=True, run_on_dev_server=False, java_max_heap=None,):
-    #print(manifest_file)
-    print(*locals().items())
     webin_client = EnaWebinClient(user, password)
     with working_directory(pathlib.Path(manifest_file).parent):
         is_valid, messages = webin_client.validate(manifest_file.name, dev=run_on_dev_server, java_max_heap=java_max_heap,)
@@ -38,39 +36,18 @@ def process_manifest(manifest_file, user, password, submit=True, run_on_dev_serv
             ena_id, messages = webin_client.submit(manifest_file.name, dev=run_on_dev_server, java_max_heap=java_max_heap,)
             if ena_id:
                 pathlib.Path("DONE").touch()
-                return ena_id, []
-        return None, messages
-        
-        
-        
+                return ena_id, [], manifest_file.absolute(  )
+        return None, messages, None
     
 
+def upload(manifests, upload_f, threads=1):
+    if threads == 1:
+        for i, manifest in enumerate(manifests, start=1,):
+            ena_id, messages, manifest = upload_f(manifest)
+            yield i, ena_id, messages, manifest
+    else:
+        with Pool(processes=threads) as pool:
+            results = [pool.apply_async(upload_f, (manifest,)) for manifest in manifests]
 
-# for biosample in biosamples:
-#         assembly = assemblies.get(biosample.alias)
-#         if assembly is None:
-#             raise ValueError(f"{biosample.alias} does not have an assembly!")
-#         assembly_dir = workdir / "assemblies" / assembly.assembly_name
-#         assembly_done = assembly_dir / "DONE"
-#         if not assembly_done.is_file():
-#             assembly_dir.mkdir(parents=True, exist_ok=True,)
-#             with working_directory(assembly_dir):
-#                 manifest = Manifest.from_assembly(assembly, study_id, biosample.accession)
-#                 manifest_file = pathlib.Path(f"{assembly.assembly_name}.manifest.txt")
-#                 if not manifest_file.is_file():
-#                     with open(manifest_file, "wt") as _out:
-#                         print(manifest.to_str(), file=_out,)
-#                 print(manifest)
-
-#                 is_valid, messages = webin_client.validate(manifest_file, dev=run_on_dev_server,)
-#                 if is_valid:
-#                     ena_id, messages = webin_client.submit(manifest_file, dev=run_on_dev_server,)
-#                     if ena_id:
-#                         messages = []
-#                         print("ENA-ID", ena_id,)
-#                         pathlib.Path("DONE").touch()
-
-#                 if messages:
-#                     print(*messages, sep="\n",)
-
-#                 print("-----------------------------------------------------")
+            for i, (ena_id, messages, manifest) in enumerate([res.get() for res in results], start=1):
+                yield i, ena_id, messages, manifest
