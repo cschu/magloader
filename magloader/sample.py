@@ -99,6 +99,7 @@ class Sample:
                         )
                     )
                     for bs in self.get_biosamples()
+                    if bs[:3] == "SAM"
                 ),
                 sample_link(
                     xref_link(
