@@ -1,3 +1,5 @@
+import re
+
 from dataclasses import dataclass
 
 import lxml.builder
@@ -115,6 +117,8 @@ class Sample:
     @staticmethod
     def parse_submission_response(response):
 
+        failed_samples = {}
+
         for sample in response.findall("SAMPLE"):
 
             d = {
@@ -127,4 +131,24 @@ class Sample:
 
             ext_id = sample.find("EXT_ID")
             d["ext_accession"] = ext_id.attrib.get("accession") if ext_id is not None else None
-            yield SubmissionResponseObject(**d)
+
+            if d["accession"] is None:
+                failed_samples[d["alias"]] = d
+            else:
+                yield SubmissionResponseObject(**d)
+
+        if failed_samples:
+            messages = response.find("MESSAGES")
+            if messages is not None:
+                for msg in messages.getchildren():
+                    # <ERROR>In sample, alias: "spire_sample_98834". The object being added already exists in the submission account with accession: "ERS25233782".</ERROR>
+                    match = re.search(
+                        r'In sample, alias: "(.+)"\. The object being added already exists in the submission account with accession: "(.+)"\.',
+                        msg.text
+                    )
+                    if match:
+                        alias, accession = match.group(1), match.group(2)
+                        d = failed_samples.get(alias)
+                        if d is not None:
+                            d["accession"] = accession
+                            yield SubmissionResponseObject(**d)
