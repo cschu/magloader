@@ -74,7 +74,7 @@ def main():
         "samples "
         f"{assembly_join}"
         f"{software_join}"
-        "JOIN ena on ena.sample_id = samples.id "
+        "LEFT OUTER JOIN ena on ena.sample_id = samples.id "
         "LEFT OUTER JOIN average_coverage on average_coverage.sample_id = samples.id "
         f"WHERE samples.study_id = {args.study_id};"
     )
@@ -111,7 +111,7 @@ def main():
     pprint.pprint(json_d)
 
     with open(f"spire_study_{args.study_id}.json", "wt", encoding="UTF-8",) as json_out:
-        json.dump(json_d, json_out)
+        json.dump(json_d, json_out, indent=4,)
 
 
 if __name__ == "__main__":
