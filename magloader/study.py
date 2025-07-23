@@ -6,7 +6,7 @@ from .submission import SubmissionResponseObject
 
 
 DESCRIPTION = """
-Third Party Annotations (TPA) derived from dataset{multiple_datasets} {raw_data_projects}
+Third Party Annotations (TPA) derived from dataset(s) {raw_data_projects}
 as part of the SPIRE database v01.
 This project bundles data on metagenomic assemblies
 (using {assembler} {assembler_version}) and derived metagenome-assembled genomes.
@@ -54,7 +54,7 @@ class Study:
             assembler_version=self.assembler_version,
             pipeline=self.pipeline,
             pipeline_version=self.pipeline_version,
-            multiple_datasets="s" if "," in self.raw_data_projects else "",
+            # multiple_datasets="s" if "," in self.raw_data_projects else "",
         ).replace("\n", " ")
     def get_title(self):
         return TITLE.format(study_name=self.study_name)
@@ -102,11 +102,13 @@ class Study:
                     *(
                         study_link(
                             xref_link(
-                                db("ENA-SUBMISSION"),
+                                # db("ENA-SUBMISSION"),
+                                db("BIOPROJECT"),
                                 id_(xid),
                             )
                         )
                         for xid in self.get_raw_data_projects()
+                        if xid[:3] == "PRJ"
                     ),
                 ),
                 study_attributes(
