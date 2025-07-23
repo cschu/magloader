@@ -34,15 +34,15 @@ def main():
         "study_id, study_accession, study_name "
         "FROM "
         "("
-        "	SELECT ena.study_id, ena.study_accession, studies.study_name "
-        "	FROM ena "
-        "	JOIN studies ON ena.study_id = studies.id"
+        "	SELECT studies.id AS study_id, ena.study_accession, studies.study_name "
+        "	FROM studies "
+        "	LEFT OUTER JOIN ena ON ena.study_id = studies.id"
         ") AS studies_ena "
         f"WHERE study_id = {args.study_id};"
     )
 
     json_d["accessions"] = ";".join(
-        acc
+        acc if acc else ""
         for json_d["study_id"], acc, json_d["study_name"]
         in cursor.fetchall()
     )
