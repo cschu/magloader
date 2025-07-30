@@ -13,6 +13,7 @@ def main():
     ap.add_argument("db_json", type=str)
     ap.add_argument("--spire_version", type=int, choices=(1,2,), default=1)
     ap.add_argument("--assembly_dir", type=str, default="assemblies")
+    ap.add_argument("--study_type", choices=("ena", "mg-rast",), default="ena",)
     args = ap.parse_args()
 
     assembly_dir = pathlib.Path(args.assembly_dir)
@@ -27,25 +28,49 @@ def main():
     cursor = connection.cursor()
     print("got cursor")
 
-    json_d = {}
+    json_d = {
+        "study_id": args.study_id,
+        "study_name": "",
+        "study_type": args.study_type,
+    }
 
-    cursor.execute(
-        "SELECT DISTINCT "
-        "study_id, study_accession, study_name "
-        "FROM "
-        "("
-        "	SELECT studies.id AS study_id, ena.study_accession, studies.study_name "
-        "	FROM studies "
-        "	LEFT OUTER JOIN ena ON ena.study_id = studies.id"
-        ") AS studies_ena "
-        f"WHERE study_id = {args.study_id};"
-    )
+    if args.study_type == "ena":
+        cursor.execute(
+            "SELECT DISTINCT "
+            "study_accession, study_name "
+            "FROM "
+            "("
+            "	SELECT ena.study_accession, studies.study_name "
+            "	FROM studies "
+            "	LEFT OUTER JOIN ena ON ena.study_id = studies.id"
+            ") AS studies_ena "
+            f"WHERE study_id = {args.study_id};"
+        )
+        json_d["accessions"] = ";".join(
+            acc if acc else ""
+            for acc, json_d["study_name"]
+            in cursor.fetchall()
+        )
+    elif args.study_type == "mg-rast":
+        cursor.execute(
+            f"SELECT study_name FROM studies WHERE id = {args.study_id};"
+        )
+        json_d["study_name"] = list(cursor.fetchall())[0][0]
 
-    json_d["accessions"] = ";".join(
-        acc if acc else ""
-        for json_d["study_id"], acc, json_d["study_name"]
-        in cursor.fetchall()
-    )
+        cursor.execute(
+            "SELECT DISTINCT "
+            "(split_part(sample_name, '_', 1)) "
+            "FROM samples "
+            f"WHERE study_id = {args.study_id};"
+        )
+        json_d["accessions"] = ";".join(
+            acc if acc else ""
+            for acc
+            in cursor.fetchall()
+        )
+
+
+    
 
     if args.spire_version == 1:
         assembly_query = "'null'"
