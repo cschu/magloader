@@ -205,6 +205,36 @@ class SpireV1StudyEna(SpireV1Study):
         return re.sub(r' +', " ", dedent(description.strip()).replace("\n", " "))
 
 
+class SpireV1StudyMgRast(SpireV1Study):
+    def __init__(
+        self,
+        study_id: str = None,
+        raw_data_projects: str = None,
+    ):
+        super().__init__(
+            study_id = study_id,
+            raw_data_projects = raw_data_projects,
+        )
+
+    def get_spire_link(self):
+        return super().get_spire_link()
+    
+    def get_title(self):
+        return super().get_title()
+    
+    def get_description(self):
+        description = f"""
+            Third Party Annotations (TPA) derived from MG-RAST data {self.raw_data_projects}
+            as part of the SPIRE database v01.
+            This project bundles data on metagenomic assemblies
+            (using {self.assembler} {self.assembler_version}) and derived metagenome-assembled genomes.
+            Data was processed using the {self.pipeline} {self.pipeline_version}.
+            The project is accessible under {self.get_spire_link()}.
+            """
+        
+        return re.sub(r' +', " ", dedent(description.strip()).replace("\n", " "))
+
+
 # @dataclass
 # class Study:
 #     study_id: str = None
