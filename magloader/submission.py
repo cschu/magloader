@@ -100,9 +100,10 @@ class Submission:
             _out.write(submission_xml)
 
         obj_xml = obj.toxml()
+        obj_base = obj.get_baseclass()
 
         # obj_xml = lxml.etree.tostring(obj.toxml()).decode()
-        with open(f"{obj.__class__.__name__.lower()}.xml", "wb") as _out:
+        with open(f"{obj_base.__name__.lower()}.xml", "wb") as _out:
             _out.write(lxml.etree.tostring(obj_xml, pretty_print=True,))
 
         response = requests.post(
@@ -113,17 +114,17 @@ class Submission:
                 # obj.__class__.__name__.upper().replace("SET", ""): StringIO(
                 #     lxml.etree.tostring(obj.toxml()).decode()
                 # ),
-                obj.__class__.__name__.upper().replace("SET", ""): StringIO(lxml.etree.tostring(obj_xml).decode()),
+                obj_base.__name__.upper().replace("SET", ""): StringIO(lxml.etree.tostring(obj_xml).decode()),
             },
             auth=self.get_auth(),
             timeout=self.timeout,
         )
 
         response_xml = "\n".join(line for line in response.text.strip().split("\n") if line[:5] != "<?xml")
-        with open(f"{obj.__class__.__name__.lower()}_ena_response.xml", "wt") as _out:
+        with open(f"{obj_base.__name__.lower()}_ena_response.xml", "wt") as _out:
             _out.write(response_xml)
 
-        return SubmissionResponse.from_xml(response_xml, obj.__class__)
+        return SubmissionResponse.from_xml(response_xml, obj_base)
 
 
     @staticmethod

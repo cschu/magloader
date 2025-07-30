@@ -14,7 +14,7 @@ import lxml.etree
 from .assembly import Assembly
 from .manifest import Manifest
 from .sample import SampleSet
-from .study import Study
+from .study import Study, SpireV1StudyEna
 from .submission import Submission, SubmissionResponse
 from .upload import check_assemblies, prepare_manifest_files, process_manifest, upload
 from .webin import get_webin_credentials, EnaWebinClient
@@ -79,7 +79,7 @@ def main():
 
     study_id = None
 
-    study_obj = Study(study_id=study_data["study_id"], raw_data_projects=study_data["accessions"],)
+    study_obj = SpireV1StudyEna(study_id=study_data["study_id"], raw_data_projects=study_data["accessions"],)
     print(study_obj)
 
     # register bioproject

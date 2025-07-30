@@ -27,6 +27,9 @@ class SampleSet:
 
         return doc
 
+    def get_base(self):
+        return self.__class__
+
     @staticmethod
     def parse_submission_response(response):
         yield from Sample.parse_submission_response(response)
