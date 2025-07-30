@@ -1,3 +1,5 @@
+import re
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from textwrap import dedent
@@ -192,7 +194,7 @@ class SpireV1StudyEna(SpireV1Study):
     
     def get_description(self):
         description = f"""
-            Third Party Annotations (TPA) derived from dataset(s) {self.get_raw_data_projects()}
+            Third Party Annotations (TPA) derived from dataset(s) {self.raw_data_projects}
             as part of the SPIRE database v01.
             This project bundles data on metagenomic assemblies
             (using {self.assembler} {self.assembler_version}) and derived metagenome-assembled genomes.
@@ -200,7 +202,7 @@ class SpireV1StudyEna(SpireV1Study):
             The project is accessible under {self.get_spire_link()}.
             """
         
-        return dedent(description.replace("\n", " "))
+        return re.sub(r' +', " ", dedent(description.strip()).replace("\n", " "))
 
 
 # @dataclass
