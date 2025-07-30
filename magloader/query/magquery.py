@@ -42,9 +42,9 @@ def main():
             "("
             "	SELECT ena.study_accession, studies.study_name "
             "	FROM studies "
-            "	LEFT OUTER JOIN ena ON ena.study_id = studies.id"
-            f"  WHERE studies.id = {args.study_id};"
-            ") AS studies_ena "
+            "	LEFT OUTER JOIN ena ON ena.study_id = studies.id "
+            f"  WHERE studies.id = {args.study_id}"
+            ") AS studies_ena;"
         )
         json_d["accessions"] = ";".join(
             acc if acc else ""
