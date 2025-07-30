@@ -64,7 +64,7 @@ def main():
             f"WHERE study_id = {args.study_id};"
         )
         json_d["accessions"] = ";".join(
-            acc if acc else ""
+            acc[0] if acc[0] else ""
             for acc
             in cursor.fetchall()
         )
