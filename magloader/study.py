@@ -158,12 +158,8 @@ class SpireV1Study(SpireStudy):
         super().__init__(
             study_id = study_id,
             raw_data_projects = raw_data_projects,
-            center_name = "EMBL Heidelberg",
-            study_keyword = "TPA:assembly",
-            new_study_type = "Metagenomic assembly",
             assembler = "MEGAHIT",
             assembler_version = "v1.2.9",
-            pipeline = "SPIRE pipeline",
             pipeline_version = "v1.0.0",
         )
 
