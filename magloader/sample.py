@@ -104,6 +104,15 @@ class Sample:
                     for bs in self.get_biosamples()
                     if bs[:3] == "SAM"
                 ),
+                *(
+                    sample_link(
+                        xref_link(
+                            db("MG-RAST"), id_(mgs)
+                        )
+                    )
+                    for mgs in self.get_biosamples()
+                    if mgs[:3] == "mgp"
+                ),
                 sample_link(
                     xref_link(
                         db("BIOPROJECT"), id_(self.spire_ena_project_id)
