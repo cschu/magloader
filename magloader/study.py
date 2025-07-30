@@ -9,6 +9,7 @@ import lxml.builder
 from .submission import SubmissionResponseObject
 
 
+
 class Study(ABC):
     def __init__(
         self,
@@ -348,3 +349,7 @@ class SpireV1StudyMgRast(SpireV1Study):
 #                 accession=study.attrib.get("accession"),
 #                 ext_accession=ext_id.attrib.get("accession") if ext_id is not None else None,
 #             )
+STUDY_TYPES = {
+    "ena": SpireV1StudyEna,
+    "mg-rast": SpireV1StudyMgRast,
+}
