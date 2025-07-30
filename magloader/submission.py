@@ -100,7 +100,7 @@ class Submission:
             _out.write(submission_xml)
 
         obj_xml = obj.toxml()
-        obj_base = obj.get_baseclass()
+        obj_base = obj.get_base()
 
         # obj_xml = lxml.etree.tostring(obj.toxml()).decode()
         with open(f"{obj_base.__name__.lower()}.xml", "wb") as _out:
