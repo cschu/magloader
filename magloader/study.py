@@ -157,7 +157,6 @@ class SpireV1Study(SpireStudy):
     ):
         super().__init__(
             study_id = study_id,
-            study_name = f"spire_study_{study_id}",
             raw_data_projects = raw_data_projects,
             center_name = "EMBL Heidelberg",
             study_keyword = "TPA:assembly",
