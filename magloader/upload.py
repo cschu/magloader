@@ -32,7 +32,8 @@ def process_manifest(manifest_file, user, password, submit=True, run_on_dev_serv
     webin_client = EnaWebinClient(user, password)
     with working_directory(pathlib.Path(manifest_file).parent):
         validation_sentinel = pathlib.Path("VALIDATION_DONE")
-        if not validation_sentinel.is_file():
+        is_valid = validation_sentinel.is_file()
+        if not is_valid:
             is_valid, messages = webin_client.validate(manifest_file.name, dev=run_on_dev_server, java_max_heap=java_max_heap,)
             if is_valid:
                 validation_sentinel.touch()
