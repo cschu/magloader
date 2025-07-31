@@ -13,7 +13,7 @@ def main():
     ap.add_argument("db_json", type=str)
     ap.add_argument("--spire_version", type=int, choices=(1,2,), default=1)
     ap.add_argument("--assembly_dir", type=str, default="assemblies")
-    ap.add_argument("--study_type", choices=("ena", "mg-rast", "metasub", "ena_mg-rast"), default="ena",)
+    ap.add_argument("--study_type", choices=("ena", "mg-rast", "metasub", "internal", "ena_mg-rast",), default="ena",)
     args = ap.parse_args()
 
     assembly_dir = pathlib.Path(args.assembly_dir)
@@ -69,7 +69,7 @@ def main():
             for acc
             in cursor.fetchall()
         )
-    elif args.study_type == "metasub":
+    elif args.study_type == "metasub" or args.study_type == "internal":
         cursor.execute(
             f"SELECT study_name FROM studies WHERE id = {args.study_id};"
         )
