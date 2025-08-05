@@ -1,5 +1,6 @@
 import re
 
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
 import lxml.builder
@@ -7,104 +8,40 @@ import lxml.builder
 from .submission import SubmissionResponseObject
 
 
-DESCRIPTION = "SPIRE v01 sample. This is a virtual sample, derived from {sample_list}."
+class Sample(ABC):
+    def __init__(
+        self,
+        spire_ena_project_id: str = None,
+        sample_id: str = None,
+        biosamples: str = None,
+        taxon_id: str = "256318",
+        database: str = "SPIRE",
+        db_version: str = "v01",
+    ):
+        self.spire_ena_project_id = spire_ena_project_id
+        self.sample_id = sample_id
+        self.biosamples = biosamples
+        self.taxon_id = taxon_id
+        self.database = database
+        self.version = db_version
 
-TITLE = "SPIRE v01 sample spire_sample_{sample_id}."
+        self.attributes = {
+            "collection date": "missing: third party data",
+            "geographic location (country and/or sea)": "missing: third party data",
+        }
 
-
-
-
-@dataclass
-class Sample:
-    # spire_ena_project_id	sample_id	assembly_name	assembly_type	program	description	file_path
-    spire_ena_project_id: str = None
-    sample_id: str = None
-    # description: str = None
-    biosamples: str = None
-
-    def __post_init__(self):
-        # self.biosamples = self.description.split(" ")[-1].strip(".")
-        ...
-
-    def get_description(self):
-        return DESCRIPTION.format(sample_list=self.biosamples)
-
-    def get_title(self):
-        return TITLE.format(sample_id=self.sample_id)
-
+    def get_base(self):
+        return self.__class__.__mro__[:-2][-1]
+    
     def get_biosamples(self):
         yield from self.biosamples.strip().split(";")
 
-    def get_taxon_id(self):
-        return "256318"
-
-    def toxml(self):
-        maker = lxml.builder.ElementMaker()
-
-        # sample_set = maker.SAMPLE_SET
-        sample = maker.SAMPLE
-        title = maker.TITLE
-        sample_name = maker.SAMPLE_NAME
-        taxon_id = maker.TAXON_ID
-        description = maker.DESCRIPTION
-        sample_links = maker.SAMPLE_LINKS
-        sample_link = maker.SAMPLE_LINK
-        xref_link = maker.XREF_LINK
-        db = maker.DB
-        id_ = maker.ID
-        sample_attributes = maker.SAMPLE_ATTRIBUTES
-        sample_attribute = maker.SAMPLE_ATTRIBUTE
-        tag = maker.TAG
-        value = maker.VALUE
-
-        attributes = [
-            sample_attribute(
-                tag("collection date"), value("missing: third party data",)
-            ),
-            sample_attribute(
-                tag("geographic location (country and/or sea)"), value("missing: third party data",)
-            ),
-        ]
-
-        doc = sample(
-            title(self.get_title()),
-            sample_name(
-                taxon_id(self.get_taxon_id()),
-            ),
-            description(self.get_description()),
-            sample_links(
-                *(
-                    sample_link(
-                        xref_link(
-                            db("BIOSAMPLE"), id_(bs)
-                        )
-                    )
-                    for bs in self.get_biosamples()
-                    if bs[:3] == "SAM"
-                ),
-                *(
-                    sample_link(
-                        xref_link(
-                            db("MG-RAST"), id_(mgs)
-                        )
-                    )
-                    for mgs in self.get_biosamples()
-                    if mgs[:3] == "mgp"
-                ),
-                sample_link(
-                    xref_link(
-                        db("BIOPROJECT"), id_(self.spire_ena_project_id)
-                    )
-                ),
-            ),
-            sample_attributes(
-                *attributes
-            ),
-            alias=f"spire_sample_{self.sample_id}",
-        )
-
-        return doc
-
+    def get_description(self):
+        return f"{self.database} {self.db_version} sample. This is a virtual sample, derived from {self.biosamples}."
+    
+    def get_title(self):
+        return f"{self.database} {self.db_version} sample spire_sample_{self.sample_id}."
+    
     @staticmethod
     def parse_submission_response(response):
 
@@ -144,4 +81,84 @@ class Sample:
                             d["accession"] = accession
                             yield SubmissionResponseObject(**d)
 
+    def toxml(self):
+        maker = lxml.builder.ElementMaker()
 
+        # sample_attribute = maker.SAMPLE_ATTRIBUTE
+        # tag = maker.TAG
+        # value = maker.VALUE
+        sample_link = maker.SAMPLE_LINK
+        xref_link = maker.XREF_LINK
+        db = maker.DB
+        id_ = maker.ID
+
+        # attributes = [
+        #     sample_attribute(
+        #         tag(k), value(v)
+        #     )
+        #     for k, v in self.attributes
+        # ]
+        
+        doc = maker.SAMPLE(
+            maker.TITLE(self.get_title()),
+            maker.SAMPLE_NAME(
+                maker.TAXON_ID(self.taxon_id),
+            ),
+            maker.DESCRIPTION(self.get_description()),
+            maker.SAMPLE_LINKS(
+                *(
+                    sample_link(
+                        xref_link(
+                            db("BIOSAMPLE"), id_(bs)
+                        )
+                    )
+                    for bs in self.get_biosamples()
+                    if bs[:3] == "SAM"
+                ),
+                *(
+                    sample_link(
+                        xref_link(
+                            db("MG-RAST"), id_(mgs)
+                        )
+                    )
+                    for mgs in self.get_biosamples()
+                    if mgs[:3] == "mgp"
+                ),
+                sample_link(
+                    xref_link(
+                        db("BIOPROJECT"), id_(self.spire_ena_project_id)
+                    )
+                ),
+            ),
+            maker.SAMPLE_ATTRIBUTES(
+                *(
+                    maker.SAMPLE_ATTRIBUTE(
+                        maker.TAG(k), maker.VALUE(v)
+                    )
+                    for k, v in self.attributes
+                )
+            ),
+            alias=f"spire_sample_{self.sample_id}",
+        )
+
+        return doc
+
+
+# class MagSample(Sample):
+#     def __init__(
+#         self,
+#         spire_ena_project_id: str = None,
+#         sample_id: str = None,
+#         biosamples: str = None,
+#         taxon_id: str = "256318",
+#         database: str = "SPIRE",
+#         db_version: str = "v01",
+#     ):
+#         super().__init__(
+#             spire_ena_project_id=spire_ena_project_id,
+#             sample_id=sample_id,
+#             biosamples=biosamples,
+#             taxon_id=taxon_id,
+#             database=database,
+#             db_version=db_version,
+#         )

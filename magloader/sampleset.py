@@ -8,8 +8,6 @@ class SampleSet:
         self.samples = []
     def toxml(self):
         maker = lxml.builder.ElementMaker()
-        # sample_set = maker.SAMPLE_SET
-
         doc = maker.SAMPLE_SET(
             *(
                 sample.toxml()
