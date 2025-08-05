@@ -144,4 +144,4 @@ class Sample:
                             d["accession"] = accession
                             yield SubmissionResponseObject(**d)
 
-cc
+
