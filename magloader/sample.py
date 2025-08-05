@@ -23,7 +23,7 @@ class Sample(ABC):
         self.biosamples = biosamples
         self.taxon_id = taxon_id
         self.database = database
-        self.version = db_version
+        self.db_version = db_version
 
         self.attributes = {
             "collection date": "missing: third party data",
