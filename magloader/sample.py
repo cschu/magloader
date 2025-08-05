@@ -135,7 +135,7 @@ class Sample(ABC):
                     maker.SAMPLE_ATTRIBUTE(
                         maker.TAG(k), maker.VALUE(v)
                     )
-                    for k, v in self.attributes
+                    for k, v in self.attributes.items()
                 )
             ),
             alias=f"spire_sample_{self.sample_id}",
