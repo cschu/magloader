@@ -13,6 +13,7 @@ def main():
     ap.add_argument("db_json", type=str)
     ap.add_argument("--spire_version", type=int, choices=(1,2,), default=1)
     ap.add_argument("--assembly_dir", type=str, default="assemblies")
+    ap.add_argument("--study_type", choices=("ena", "mg-rast", "metasub", "internal", "ena_mg-rast",), default="ena",)
     args = ap.parse_args()
 
     assembly_dir = pathlib.Path(args.assembly_dir)
@@ -27,25 +28,55 @@ def main():
     cursor = connection.cursor()
     print("got cursor")
 
-    json_d = {}
+    json_d = {
+        "study_id": args.study_id,
+        "study_name": "",
+        "study_type": args.study_type,
+        "accessions": "",
+    }
 
-    cursor.execute(
-        "SELECT DISTINCT "
-        "study_id, study_accession, study_name "
-        "FROM "
-        "("
-        "	SELECT ena.study_id, ena.study_accession, studies.study_name "
-        "	FROM ena "
-        "	JOIN studies ON ena.study_id = studies.id"
-        ") AS studies_ena "
-        f"WHERE study_id = {args.study_id};"
-    )
+    if args.study_type == "ena":
+        cursor.execute(
+            "SELECT DISTINCT "
+            "study_accession, study_name "
+            "FROM "
+            "("
+            "	SELECT ena.study_accession, studies.study_name "
+            "	FROM studies "
+            "	LEFT OUTER JOIN ena ON ena.study_id = studies.id "
+            f"  WHERE studies.id = {args.study_id}"
+            ") AS studies_ena;"
+        )
+        json_d["accessions"] = ";".join(
+            acc if acc else ""
+            for acc, json_d["study_name"]
+            in cursor.fetchall()
+        )
+    elif args.study_type == "mg-rast":
+        cursor.execute(
+            f"SELECT study_name FROM studies WHERE id = {args.study_id};"
+        )
+        json_d["study_name"] = list(cursor.fetchall())[0][0]
 
-    json_d["accessions"] = ";".join(
-        acc
-        for json_d["study_id"], acc, json_d["study_name"]
-        in cursor.fetchall()
-    )
+        cursor.execute(
+            "SELECT DISTINCT "
+            "(split_part(sample_name, '_', 1)) "
+            "FROM samples "
+            f"WHERE study_id = {args.study_id};"
+        )
+        json_d["accessions"] = ";".join(
+            acc[0] if acc[0] else ""
+            for acc
+            in cursor.fetchall()
+        )
+    elif args.study_type == "metasub" or args.study_type == "internal":
+        cursor.execute(
+            f"SELECT study_name FROM studies WHERE id = {args.study_id};"
+        )
+        json_d["study_name"] = list(cursor.fetchall())[0][0]
+
+
+    
 
     if args.spire_version == 1:
         assembly_query = "'null'"
@@ -74,7 +105,7 @@ def main():
         "samples "
         f"{assembly_join}"
         f"{software_join}"
-        "JOIN ena on ena.sample_id = samples.id "
+        "LEFT OUTER JOIN ena on ena.sample_id = samples.id "
         "LEFT OUTER JOIN average_coverage on average_coverage.sample_id = samples.id "
         f"WHERE samples.study_id = {args.study_id};"
     )
@@ -111,7 +142,7 @@ def main():
     pprint.pprint(json_d)
 
     with open(f"spire_study_{args.study_id}.json", "wt", encoding="UTF-8",) as json_out:
-        json.dump(json_d, json_out)
+        json.dump(json_d, json_out, indent=4,)
 
 
 if __name__ == "__main__":

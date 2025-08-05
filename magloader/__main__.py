@@ -14,7 +14,7 @@ import lxml.etree
 from .assembly import Assembly
 from .manifest import Manifest
 from .sample import SampleSet
-from .study import Study
+from .study import Study, STUDY_TYPES
 from .submission import Submission, SubmissionResponse
 from .upload import check_assemblies, prepare_manifest_files, process_manifest, upload
 from .webin import get_webin_credentials, EnaWebinClient
@@ -23,7 +23,7 @@ from .workdir import working_directory
 
 
 
-def register_object(user, pw, obj, obj_type, hold_date=None, dev=True,):
+def register_object(user, pw, obj, obj_type, hold_date=None, dev=True, timeout=60,):
     response = None
     obj_json = pathlib.Path(f"{obj_type}_response.json")
 
@@ -35,7 +35,7 @@ def register_object(user, pw, obj, obj_type, hold_date=None, dev=True,):
                 print(f"Reading {obj_type} submission failed.\n\n", err )
                 response = None
     if response is None:
-        sub = Submission(user, pw, hold_date=hold_date, dev=dev)
+        sub = Submission(user, pw, hold_date=hold_date, dev=dev, timeout=timeout,)
         response = sub.submit(obj)
         with open(obj_json, "wt") as _out:
             _out.write(response.to_json())
@@ -57,6 +57,7 @@ def main():
     ap.add_argument("--ena_live", action="store_true")
     ap.add_argument("--threads", type=int, default=1)
     ap.add_argument("--java_max_heap", type=str, default=None,)
+    ap.add_argument("--timeout", type=int, default=60,)
 
     args = ap.parse_args()
 
@@ -79,7 +80,9 @@ def main():
 
     study_id = None
 
-    study_obj = Study(study_id=study_data["study_id"], raw_data_projects=study_data["accessions"],)
+    StudyType = STUDY_TYPES.get(study_data.get("study_type", "ena"))
+
+    study_obj = StudyType(study_id=study_data["study_id"], raw_data_projects=study_data["accessions"],)
     print(study_obj)
 
     # register bioproject
@@ -112,7 +115,7 @@ def main():
     sample_dir = pathlib.Path(workdir / "samples")
     sample_dir.mkdir(exist_ok=True, parents=True,)
     with working_directory(sample_dir):
-        biosamples = register_object(user, pw, sample_set, "sample", hold_date=args.hold_date, dev=run_on_dev_server,)
+        biosamples = register_object(user, pw, sample_set, "sample", hold_date=args.hold_date, dev=run_on_dev_server, timeout=args.timeout,)
         biosamples = list(biosamples)
 
     print(biosamples, sep="\n")
