@@ -13,7 +13,7 @@ import lxml.etree
 
 from .assembly import Assembly
 from .manifest import Manifest
-from .sample import SampleSet
+from .sampleset import SampleSet
 from .study import Study, STUDY_TYPES
 from .submission import Submission, SubmissionResponse
 from .upload import check_assemblies, prepare_manifest_files, process_manifest, upload
