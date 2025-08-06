@@ -61,6 +61,12 @@ def main():
 			"spire_vstudy": manifest.get("STUDY"),
 			"spire_vsample": manifest.get("SAMPLE"),
 		}
+		if len(sample_d["biosamples"]) > 1:
+			raise ValueError("TOO MANY BIOSAMPLES")
+		for spire_bin in db.bins.find({"sample_id": sample_d["biosamples"][0]}):
+			print(spire_bin)
+			break
+
 		pprint.pprint(sample_d)
 		break
 
