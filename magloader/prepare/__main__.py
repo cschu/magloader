@@ -33,7 +33,7 @@ def main():
 	for d in dirs:
 		with open(assembly_dir / d / f"{d}.manifest.txt", "rt") as _in:
 			manifest = dict(
-				re.split(' +', line.strip())
+				re.split(' {3}', line.strip())
 				for line in _in
 			)
 		print(manifest)
