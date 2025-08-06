@@ -63,12 +63,15 @@ def main():
 		}
 		if len(sample_d["biosamples"]) > 1:
 			raise ValueError("TOO MANY BIOSAMPLES")
-		for spire_bin in db.bins.find({"sample_id": sample_d["biosamples"][0]}):
-			print(spire_bin)
-			break
-
+		bins = list(db.bins.find({"sample_id": sample_d["biosamples"][0]}))
+		
 		pprint.pprint(sample_d)
-		break
+		if bins:
+			for spire_bin in bins:
+				print(spire_bin)
+				break
+			break	
+		# break
 
 
 
