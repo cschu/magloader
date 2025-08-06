@@ -68,7 +68,7 @@ def main():
 		pprint.pprint(sample_d)
 		if bins:
 			for spire_bin in bins:
-				print(spire_bin)
+				pprint.pprint(spire_bin)
 				break
 			break	
 		# break
