@@ -47,6 +47,7 @@ with open(path.join(here, "DESCRIPTION.md"), encoding="utf-8") as description:
 			'requests',
 			'psycopg2-binary',
 			"setuptools>=61.0,<69",
+			"pymongo",
 		],
 		zip_safe=False,
 		keywords="ena mag upload",
