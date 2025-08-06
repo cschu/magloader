@@ -57,6 +57,7 @@ def main():
 				for line in _in
 			)
 		sample_d = {
+			"assemblyname": d,
 			"biosamples": samples.get(manifest["ASSEMBLYNAME"]),
 			"spire_vstudy": manifest.get("STUDY"),
 			"spire_vsample": manifest.get("SAMPLE"),
