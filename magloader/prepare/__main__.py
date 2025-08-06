@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 import pathlib
+import pprint
 import re
 
 import pymongo
@@ -39,23 +40,28 @@ def main():
 	db = client[dbname]
 
 	with open(args.study_json, "rt") as _in:
-		json_d = json.load(_in)
+		study_d = json.load(_in)
 		samples = {
 			f"spire_assembly_{item['sample_id']}": item["biosamples"].replace(";", ",").split(",")
-			for item in json_d["assemblies"]
+			for item in study_d["assemblies"]
 		}
 	
 	assembly_dir = pathlib.Path(args.workdir) / "assemblies"
 	_, dirs, _ = next(os.walk(assembly_dir))
 
 	for d in dirs:
+
 		with open(assembly_dir / d / f"{d}.manifest.txt", "rt") as _in:
 			manifest = dict(
 				re.split(' {3}', line.strip())
 				for line in _in
 			)
-		print(samples.get(manifest["ASSEMBLYNAME"]))
-		print(manifest)
+		sample_d = {
+			"biosamples": samples.get(manifest["ASSEMBLYNAME"]),
+			"spire_vstudy": manifest.get("STUDY"),
+			"spire_vsample": manifest.get("SAMPLE"),
+		}
+		pprint.pprint(sample_d)
 		break
 
 
