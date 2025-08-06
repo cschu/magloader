@@ -56,7 +56,7 @@ with open(path.join(here, "DESCRIPTION.md"), encoding="utf-8") as description:
 			entry_points={
 				"console_scripts": [
 					"magloader=magloader.__main__:main",
-					"magquery=magloader.query.magquery:main",
+					"magquery=magloader.query.__main__:main",
 				],
 			},
 		data_files=[],
