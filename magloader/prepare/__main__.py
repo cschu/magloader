@@ -24,7 +24,7 @@ def main():
 
 	args = ap.parse_args()
 
-	with open(args.study_json, "wt") as _in:
+	with open(args.study_json, "rt") as _in:
 		json_d = json.load(_in)
 	
 	assembly_dir = pathlib.Path(args.workdir) / "assemblies"
