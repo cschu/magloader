@@ -7,6 +7,8 @@ import re
 
 import pymongo
 
+from ..query.attributes import get_attributes
+
 """
 f=$1
 study=$(echo $f | cut -f 2 -d /)
@@ -70,6 +72,8 @@ def main():
 		if bins:
 			for spire_bin in bins:
 				pprint.pprint(spire_bin)
+
+				pprint.pprint(get_attributes(spire_bin, "genome", "study", "sample", "vstudy", "erz"))
 				break
 			break	
 		# break
