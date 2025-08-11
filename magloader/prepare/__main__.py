@@ -127,7 +127,7 @@ def main():
 					"ON bins.id = average_bin_coverage.bin_id "
 					f"WHERE bins.bin_name = '{bin_id}';"
 				)
-				coverage = list(cursor.fetchall())[0] or -1.0
+				coverage = list(cursor.fetchall())[0][0] or -1.0
 				mags[spire_sample_id][bin_id]["coverage"] = float(coverage)
 				
 				pprint.pprint(mags)
