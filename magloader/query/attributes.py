@@ -23,13 +23,13 @@ def get_attributes(
 		"SPIRE genome id": f"spire.embl.de/spire/v1/genome/{spire_genome_id}",
 		"linked to SPIRE study": f"spire.embl.de/spire/v1/study/{spire_study_id}",
 		"linked to SPIRE sample": f"spire.embl.de/spire/v1/sample/{spire_sample_id}",
-		"SPIRE genome cluster": f"spire.embl.de/spire/v1/cluster/{spire_cluster}",
+		"SPIRE genome cluster": f"spire.embl.de/spire/v1/cluster/{spire_cluster}" if spire_cluster is not None else "None",
 		"linked to analysis project": f"{spire_virtual_study}",
 		"derived from assembly": f"{erz_assembly_id}",
 		"completeness score": f"{checkm2_completeness}",
 		"contamination score": f"{checkm2_contamination}",
 		"completeness software": "CheckM2 v0.1.3",
-		"GUNC contaminaion score": f"{gunc_contamination}",
+		"GUNC contamination score": f"{gunc_contamination}",
 		"GUNC clade separation score": f"{gunc_css}",
 		"GUNC reference representation score": f"{gunc_rrs}",
 		"GUNC version": "GUNC v1.0.6",
@@ -51,6 +51,8 @@ def get_attributes(
 		"broad-scale environmental context": "missing: third party data",
 		"local environmental context": "missing: third party data",
 		"environmental medium": "missing: third party data",
+		"mag_id": record.get("formateted_spire_id")
+		
 	}
 
 	return attributes

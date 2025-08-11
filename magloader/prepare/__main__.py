@@ -70,8 +70,9 @@ def main():
 		
 		pprint.pprint(sample_d)
 		if bins:
+			pprint.pprint(sample_d)
 			for spire_bin in bins:
-				pprint.pprint(spire_bin)
+				# pprint.pprint(spire_bin)
 
 				pprint.pprint(get_attributes(spire_bin, "genome", "study", "sample", "vstudy", "erz"))
 				break
