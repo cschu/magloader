@@ -63,7 +63,11 @@ def main():
 	assembly_dir = pathlib.Path(args.workdir) / "assemblies"
 	_, dirs, _ = next(os.walk(assembly_dir))
 
-	mags = {}
+	json_d = {
+		"vstudy_id": None,
+		"mags": {},
+	}
+	mags = json_d["mags"]
 
 	for d in dirs:
 
@@ -90,16 +94,13 @@ def main():
 
 		if len(sample_d["biosamples"]) > 1:
 			raise ValueError("TOO MANY BIOSAMPLES")
-		
+
+		json_d["vstudy_id"] = manifest.get("STUDY")		
 
 		bins = list(mongo_db.bins.find({"sample_id": sample_d["biosamples"][0]}))
 		
-		# pprint.pprint(sample_d)
 		if bins:
-			# pprint.pprint(sample_d)
 			for spire_bin in bins:
-				# pprint.pprint(spire_bin)
-				
 				sample_attribs = get_attributes(
 						spire_bin,
 						biosamples,
@@ -141,12 +142,15 @@ def main():
 				mags[spire_sample_id][bin_id]["program"] = "megahit"
 				mags[spire_sample_id][bin_id]["program_vrsion"] = "1.2.9"
 				
-				pprint.pprint(mags)
+				# pprint.pprint(mags)
 				
-				break
-			break	
+				# break
+			# break	
 		# break
 
+	spire_study = study_d["study_id"]
+	with open(f"spire_study_{spire_study}_mags.json", "wt") as json_out:
+		json.dump(json_d, json_out, indent=4,)
 
 
 if __name__ == "__main__":
