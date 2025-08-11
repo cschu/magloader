@@ -49,7 +49,7 @@ def main():
 	with open(args.study_json, "rt") as _in:
 		study_d = json.load(_in)
 		samples = {
-			f"spire_assembly_{item['sample_id']}": item["biosamples"].replace(";", ",").split(",")
+			f"spire_assembly_{item['sample_id']}": (item["sample_id"], item["biosamples"].replace(";", ",").split(","),)
 			for item in study_d["assemblies"]
 		}
 	
@@ -58,14 +58,16 @@ def main():
 
 	for d in dirs:
 
+
 		with open(assembly_dir / d / f"{d}.manifest.txt", "rt") as _in:
 			manifest = dict(
 				re.split(' {3}', line.strip())
 				for line in _in
 			)
+		sample_id, biosamples = samples.get(manifest["ASSEMBLYNAME"])
 		sample_d = {
 			"assemblyname": d,
-			"biosamples": samples.get(manifest["ASSEMBLYNAME"]),
+			"biosamples": biosamples,
 			"spire_vstudy": manifest.get("STUDY"),
 			"spire_vsample": manifest.get("SAMPLE"),
 		}
@@ -84,7 +86,7 @@ def main():
 						spire_bin,
 						sample_d["assemblyname"],
 						study_d["study_id"],
-						sample_d["biosamples"],
+						sample_id,
 						sample_d["spire_vstudy"],
 						"erz"))
 				break
