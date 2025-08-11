@@ -38,12 +38,16 @@ def main():
 	ap.add_argument("mongodb_json", type=str)
 	ap.add_argument("db_json", type=str)
 	ap.add_argument("--workdir", "-w", type=str, default="work")
+	ap.add_argument("--mags_json_dir", type=str, default="mags_json")
 	ap.add_argument("--mag_dir", type=str, default="mags")
 	# ap.add_argument("--study_type", choices=("ena", "mg-rast", "metasub", "internal", "ena_mg-rast",), default="ena",)
 	args = ap.parse_args()
 
 	mag_dir = pathlib.Path(args.mag_dir)
 	mag_dir.mkdir(exist_ok=True, parents=True,)
+
+	mags_json_dir = pathlib.Path(args.mags_json_dir)
+	mags_json_dir.mkdir(exist_ok=True, parents=True,)
 
 	with open(args.db_json, "rt", encoding="UTF-8",) as json_in:
 		db = json.load(json_in)
@@ -63,13 +67,14 @@ def main():
 	assembly_dir = pathlib.Path(args.workdir) / "assemblies"
 	_, dirs, _ = next(os.walk(assembly_dir))
 
-	json_d = {
-		"vstudy_id": None,
-		"mags": {},
-	}
-	mags = json_d["mags"]
 
 	for d in dirs:
+		json_d = {
+			"vstudy_id": None,
+			"spire_sample": None,
+			"mags": {},
+		}
+		mags = json_d["mags"]
 
 		with open(assembly_dir / d / f"{d}.manifest.txt", "rt") as _in:
 			manifest = dict(
@@ -95,7 +100,8 @@ def main():
 		if len(sample_d["biosamples"]) > 1:
 			raise ValueError("TOO MANY BIOSAMPLES")
 
-		json_d["vstudy_id"] = manifest.get("STUDY")		
+		json_d["vstudy_id"] = manifest.get("STUDY")
+		json_d["spire_sample"] = spire_sample_id
 
 		bins = list(mongo_db.bins.find({"sample_id": sample_d["biosamples"][0]}))
 		
@@ -150,9 +156,11 @@ def main():
 			# break	
 		# break
 
-	spire_study = study_d["study_id"]
-	with open(f"spire_study_{spire_study}_mags.json", "wt") as json_out:
-		json.dump(json_d, json_out, indent=4,)
+		spire_study = study_d["study_id"]
+		with open(
+			mags_json_dir / f"spire_study_{spire_study}_{spire_sample_id}_mags.json", "wt"
+		) as json_out:
+			json.dump(json_d, json_out, indent=4,)
 
 
 if __name__ == "__main__":
