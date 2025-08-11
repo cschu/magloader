@@ -102,10 +102,11 @@ def main():
 		if bins:
 			for i, spire_bin in enumerate(bins, start=1):
 				print(f"Processing bin {spire_bin['bin_id']} ({i}/{len(bins)})", flush=True,)
+				mag_id = spire_bin.get("formatted_spire_id")
 				sample_attribs = get_attributes(
 						spire_bin,
 						biosamples,
-						sample_d["assemblyname"],
+						mag_id,
 						study_d["study_id"],
 						spire_sample_id,
 						sample_d["spire_vstudy"],
@@ -121,7 +122,7 @@ def main():
 					pass
 
 				bin_data = { 			
-        			"mag_id": spire_bin.get("formatted_spire_id"),
+        			"mag_id": mag_id,
         			"bin_id": bin_id,
 					"bin_path": str(bin_path.absolute()),
 				}
