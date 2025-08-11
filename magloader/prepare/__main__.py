@@ -5,6 +5,7 @@ import pathlib
 import pprint
 import re
 
+import psycopg2
 import pymongo
 
 from ..query.attributes import get_attributes
@@ -34,6 +35,7 @@ def get_client(f):
 def main():
 	ap = argparse.ArgumentParser()
 	ap.add_argument("study_json", type=str)
+	ap.add_argument("mongodb_json", type=str)
 	ap.add_argument("db_json", type=str)
 	ap.add_argument("--workdir", "-w", type=str, default="work")
 	ap.add_argument("--mag_dir", type=str, default="mags")
@@ -43,8 +45,13 @@ def main():
 	mag_dir = pathlib.Path(args.mag_dir)
 	mag_dir.mkdir(exist_ok=True, parents=True,)
 
-	client, dbname = get_client(args.db_json)
-	db = client[dbname]
+	with open(args.db_json, "rt", encoding="UTF-8",) as json_in:
+		db = json.load(json_in)
+	connection = psycopg2.connect(**db)
+	cursor = connection.cursor()
+
+	client, dbname = get_client(args.mongodb_json)
+	mongo_db = client[dbname]
 
 	with open(args.study_json, "rt") as _in:
 		study_d = json.load(_in)
@@ -59,7 +66,6 @@ def main():
 	mags = {}
 
 	for d in dirs:
-
 
 		with open(assembly_dir / d / f"{d}.manifest.txt", "rt") as _in:
 			manifest = dict(
@@ -86,9 +92,9 @@ def main():
 			raise ValueError("TOO MANY BIOSAMPLES")
 		
 
-		bins = list(db.bins.find({"sample_id": sample_d["biosamples"][0]}))
+		bins = list(mongo_db.bins.find({"sample_id": sample_d["biosamples"][0]}))
 		
-		pprint.pprint(sample_d)
+		# pprint.pprint(sample_d)
 		if bins:
 			# pprint.pprint(sample_d)
 			for spire_bin in bins:
@@ -113,6 +119,17 @@ def main():
 				mags[spire_sample_id][bin_id].update(sample_d)
 				mags[spire_sample_id][bin_id].update(bin_data)
 				mags[spire_sample_id][bin_id]["attribs"] = sample_attribs
+
+				cursor.execute(
+					"SELECT average_bin_coverage.avg_coverage "
+					"FROM bins "
+					"LEFT OUTER JOIN average_bin_coverage "
+					"ON bins.id = average_bin_coverage.bin_id "
+					f"WHERE bins.bin_name = {bin_id};"
+				)
+				coverage = list(cursor.fetchall())[0] or -1.0
+				mags[spire_sample_id][bin_id]["coverage"] = coverage
+				
 				pprint.pprint(mags)
 				
 				break
