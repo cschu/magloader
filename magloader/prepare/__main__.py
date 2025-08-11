@@ -84,7 +84,7 @@ def main():
 						spire_bin,
 						sample_d["assemblyname"],
 						study_d["study_id"],
-						sample_d["biosamples"][0]["sample_id"],
+						sample_d["biosamples"],
 						sample_d["spire_vstudy"],
 						"erz"))
 				break
