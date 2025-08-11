@@ -1,5 +1,6 @@
 def get_attributes(
 	record,
+	sample_ids,
 	spire_genome_id,
 	spire_study_id,
 	spire_sample_id,
@@ -18,7 +19,7 @@ def get_attributes(
 	taxonomic_classification = record.get("gtdb_r214", {}).get("classification")
 
 	attributes = {
-		"sample derived from": None,
+		"sample derived from": ",".join(sample_ids),
 		"project name": "SPIRE v1: a Searchable Planetary-scale mIcrobiome REsource",
 		"SPIRE genome id": f"spire.embl.de/spire/v1/genome/{spire_genome_id}",
 		"linked to SPIRE study": f"spire.embl.de/spire/v1/study/{spire_study_id}",

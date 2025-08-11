@@ -72,7 +72,7 @@ def main():
 			except AttributeError:
 				raise ValueError("NO ERZ MATCH!")
 
-		sample_id, biosamples = samples.get(manifest["ASSEMBLYNAME"])
+		spire_sample_id, biosamples = samples.get(manifest["ASSEMBLYNAME"])
 		sample_d = {
 			"assemblyname": d,
 			"biosamples": biosamples,
@@ -91,10 +91,11 @@ def main():
 
 				pprint.pprint(
 					get_attributes(
+						biosamples,
 						spire_bin,
 						sample_d["assemblyname"],
 						study_d["study_id"],
-						sample_id,
+						spire_sample_id,
 						sample_d["spire_vstudy"],
 						erz_id,))
 				break
