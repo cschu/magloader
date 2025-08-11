@@ -108,13 +108,22 @@ def main():
 						spire_sample_id,
 						sample_d["spire_vstudy"],
 						erz_id,)
+				
+				bin_id = spire_bin.get("bin_id")
+				original_bin_path = spire_bin.get("bin_path")
+
+				bin_path = mag_dir / pathlib.Path(original_bin_path).name
+				try:
+					bin_path.symlink_to(original_bin_path)
+				except FileExistsError:
+					pass
 
 				bin_data = { 			
         			"mag_id": spire_bin.get("formatted_spire_id"),
-        			"bin_id": spire_bin.get("bin_id"),
-					"bin_path": spire_bin.get("bin_path"),
+        			"bin_id": bin_id,
+					"bin_path": bin_path,
 				}
-				bin_id = bin_data.get("bin_id")
+
 				mags.setdefault(spire_sample_id, {})[bin_id] = {}
 				mags[spire_sample_id][bin_id].update(sample_d)
 				mags[spire_sample_id][bin_id].update(bin_data)
@@ -129,6 +138,8 @@ def main():
 				)
 				coverage = list(cursor.fetchall())[0][0] or -1.0
 				mags[spire_sample_id][bin_id]["coverage"] = float(coverage)
+				mags[spire_sample_id][bin_id]["program"] = "megahit"
+				mags[spire_sample_id][bin_id]["program_vrsion"] = "1.2.9"
 				
 				pprint.pprint(mags)
 				
