@@ -91,8 +91,8 @@ def main():
 
 				pprint.pprint(
 					get_attributes(
-						biosamples,
 						spire_bin,
+						biosamples,
 						sample_d["assemblyname"],
 						study_d["study_id"],
 						spire_sample_id,
