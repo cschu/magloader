@@ -17,6 +17,7 @@ class Sample(ABC):
         taxon_id: str = "256318",
         database: str = "SPIRE",
         db_version: str = "v01",
+        center_name: str = "European Molecular Biology Laboratory (EMBL)",
     ):
         self.spire_ena_project_id = spire_ena_project_id
         self.sample_id = sample_id
@@ -24,6 +25,7 @@ class Sample(ABC):
         self.taxon_id = taxon_id
         self.database = database
         self.db_version = db_version
+        self.center_name = center_name
 
         self.attributes = {
             "collection date": "missing: third party data",
@@ -84,27 +86,17 @@ class Sample(ABC):
     def toxml(self):
         maker = lxml.builder.ElementMaker()
 
-        # sample_attribute = maker.SAMPLE_ATTRIBUTE
-        # tag = maker.TAG
-        # value = maker.VALUE
         sample_link = maker.SAMPLE_LINK
         xref_link = maker.XREF_LINK
         db = maker.DB
         id_ = maker.ID
 
-        # attributes = [
-        #     sample_attribute(
-        #         tag(k), value(v)
-        #     )
-        #     for k, v in self.attributes
-        # ]
-        
         doc = maker.SAMPLE(
             maker.TITLE(self.get_title()),
             maker.SAMPLE_NAME(
                 maker.TAXON_ID(self.taxon_id),
             ),
-            maker.DESCRIPTION(self.get_description()),
+            # maker.DESCRIPTION(self.get_description()),
             maker.SAMPLE_LINKS(
                 *(
                     sample_link(
@@ -139,26 +131,92 @@ class Sample(ABC):
                 )
             ),
             alias=f"spire_sample_{self.sample_id}",
+            center_name=self.center_name,
         )
 
         return doc
 
 
-# class MagSample(Sample):
-#     def __init__(
-#         self,
-#         spire_ena_project_id: str = None,
-#         sample_id: str = None,
-#         biosamples: str = None,
-#         taxon_id: str = "256318",
-#         database: str = "SPIRE",
-#         db_version: str = "v01",
-#     ):
-#         super().__init__(
-#             spire_ena_project_id=spire_ena_project_id,
-#             sample_id=sample_id,
-#             biosamples=biosamples,
-#             taxon_id=taxon_id,
-#             database=database,
-#             db_version=db_version,
-#         )
+class MagSample(Sample):
+    def __init__(
+        self,
+        spire_ena_project_id: str = None,
+        sample_id: str = None,  # mag_id!
+        biosamples: str = None,
+        taxon_id: str = "256318",
+        database: str = "SPIRE",
+        db_version: str = "v01",
+        attributes: dict = None,
+    ):
+        super().__init__(
+            spire_ena_project_id=spire_ena_project_id,
+            sample_id=sample_id,
+            biosamples=biosamples,
+            taxon_id=taxon_id,
+            database=database,
+            db_version=db_version,
+        )
+
+        self.attributes["ENA-CHECKLIST"] = "ERC000047"
+        self.attributes["metagenomic source"] = "408169"  # ?
+        self.attributes.update(attributes)
+
+        self.gtdb_taxonomy = attributes.get("axonomic classification", "unknown organism")
+
+
+
+    def get_title(self):
+        return f"Metagenome-Assembled Genome {self.sample_id} in {self.database} {self.db_version}, classified as {self.gtdb_taxonomy}"
+
+    def toxml(self):
+        maker = lxml.builder.ElementMaker()
+
+        sample_link = maker.SAMPLE_LINK
+        xref_link = maker.XREF_LINK
+        db = maker.DB
+        id_ = maker.ID
+
+        doc = maker.SAMPLE(
+            maker.TITLE(self.get_title()),
+            maker.SAMPLE_NAME(
+                maker.TAXON_ID(self.taxon_id),
+            ),
+            maker.DESCRIPTION(self.get_description()),
+            # maker.SAMPLE_LINKS(
+            #     *(
+            #         sample_link(
+            #             xref_link(
+            #                 db("BIOSAMPLE"), id_(bs)
+            #             )
+            #         )
+            #         for bs in self.get_biosamples()
+            #         if bs[:3] == "SAM"
+            #     ),
+            #     *(
+            #         sample_link(
+            #             xref_link(
+            #                 db("MG-RAST"), id_(mgs)
+            #             )
+            #         )
+            #         for mgs in self.get_biosamples()
+            #         if mgs[:3] == "mgp"
+            #     ),
+            #     sample_link(
+            #         xref_link(
+            #             db("BIOPROJECT"), id_(self.spire_ena_project_id)
+            #         )
+            #     ),
+            # ),
+            maker.SAMPLE_ATTRIBUTES(
+                *(
+                    maker.SAMPLE_ATTRIBUTE(
+                        maker.TAG(k), maker.VALUE(v)
+                    )
+                    for k, v in self.attributes.items()
+                )
+            ),
+            alias=f"spire_sample_{self.sample_id}",
+            center_name=self.center_name,
+        )
+
+        return doc
