@@ -36,7 +36,12 @@ def main():
 	ap.add_argument("study_json", type=str)
 	ap.add_argument("db_json", type=str)
 	ap.add_argument("--workdir", "-w", type=str, default="work")
+	ap.add_argument("--mag_dir", type=str, default="mags")
+	# ap.add_argument("--study_type", choices=("ena", "mg-rast", "metasub", "internal", "ena_mg-rast",), default="ena",)
 	args = ap.parse_args()
+
+	mag_dir = pathlib.Path(args.mag_dir)
+	mag_dir.mkdir(exist_ok=True, parents=True,)
 
 	client, dbname = get_client(args.db_json)
 	db = client[dbname]
@@ -74,7 +79,14 @@ def main():
 			for spire_bin in bins:
 				pprint.pprint(spire_bin)
 
-				pprint.pprint(get_attributes(spire_bin, "genome", "study", "sample", "vstudy", "erz"))
+				pprint.pprint(
+					get_attributes(
+						spire_bin,
+						sample_d["assemblyname"],
+						study_d["study_id"],
+						sample_d["biosamples"][0]["sample_id"],
+						sample_d["spire_vstudy"],
+						"erz"))
 				break
 			break	
 		# break
