@@ -64,6 +64,14 @@ def main():
 				re.split(' {3}', line.strip())
 				for line in _in
 			)
+		# ../prod/studies/10/work/assemblies/spire_assembly_687/webin-cli.report
+		with open(assembly_dir / d / "webin-cli.report", "rt") as _in:
+			erz_match = re.search(r'The following analysis accession was assigned to the submission: (ERZ[0-9]+)', _in.read())
+			try:
+				erz_id = erz_match.group(1)
+			except AttributeError:
+				raise ValueError("NO ERZ MATCH!")
+
 		sample_id, biosamples = samples.get(manifest["ASSEMBLYNAME"])
 		sample_d = {
 			"assemblyname": d,
@@ -88,7 +96,7 @@ def main():
 						study_d["study_id"],
 						sample_id,
 						sample_d["spire_vstudy"],
-						"erz"))
+						erz_id,))
 				break
 			break	
 		# break
