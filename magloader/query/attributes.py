@@ -16,7 +16,7 @@ def get_attributes(
 	gunc_contamination = record.get("gunc", {}).get("contamination_portion")
 	gunc_css = record.get("gunc", {}).get("clade_separation_score")
 	gunc_rrs = record.get("gunc", {}).get("reference_representation_score")
-	taxonomic_classification = record.get("gtdb_r214", {}).get("classification")
+	taxonomic_classification = record.get("gtdb_r214", {}).get("classification", "unclassified")
 
 	attributes = {
 		"sample derived from": ",".join(sample_ids),
