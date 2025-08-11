@@ -133,10 +133,11 @@ def main():
 					"bin_path": str(bin_path.absolute()),
 				}
 
-				mags.setdefault(spire_sample_id, {})[bin_id] = {}
-				mags[spire_sample_id][bin_id].update(sample_d)
-				mags[spire_sample_id][bin_id].update(bin_data)
-				mags[spire_sample_id][bin_id]["attribs"] = sample_attribs
+				# mags.setdefault(spire_sample_id, {})[bin_id] = {}
+				mags[bin_id] = {}
+				mags[bin_id].update(sample_d)
+				mags[bin_id].update(bin_data)
+				mags[bin_id]["attribs"] = sample_attribs
 
 				cursor.execute(
 					"SELECT average_bin_coverage.avg_coverage "
@@ -146,15 +147,9 @@ def main():
 					f"WHERE bins.bin_name = '{bin_id}';"
 				)
 				coverage = list(cursor.fetchall())[0][0] or -1.0
-				mags[spire_sample_id][bin_id]["coverage"] = float(coverage)
-				mags[spire_sample_id][bin_id]["program"] = "megahit"
-				mags[spire_sample_id][bin_id]["program_vrsion"] = "1.2.9"
-				
-				# pprint.pprint(mags)
-				
-				# break
-			# break	
-		# break
+				mags[bin_id]["coverage"] = float(coverage)
+				mags[bin_id]["program"] = "megahit"
+				mags[bin_id]["program_version"] = "1.2.9"
 
 		spire_study = study_d["study_id"]
 		with open(
