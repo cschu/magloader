@@ -128,7 +128,7 @@ def main():
 					f"WHERE bins.bin_name = '{bin_id}';"
 				)
 				coverage = list(cursor.fetchall())[0] or -1.0
-				mags[spire_sample_id][bin_id]["coverage"] = coverage
+				mags[spire_sample_id][bin_id]["coverage"] = float(coverage)
 				
 				pprint.pprint(mags)
 				
