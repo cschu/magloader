@@ -51,7 +51,7 @@ def get_attributes(
 		"broad-scale environmental context": "missing: third party data",
 		"local environmental context": "missing: third party data",
 		"environmental medium": "missing: third party data",
-		"mag_id": record.get("formateted_spire_id")
+		"mag_id": record.get("formatted_spire_id")
 		
 	}
 
