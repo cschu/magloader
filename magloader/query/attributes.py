@@ -52,11 +52,11 @@ def get_attributes(
 		"broad-scale environmental context": "missing: third party data",
 		"local environmental context": "missing: third party data",
 		"environmental medium": "missing: third party data",
-		"bin_data": { 			
-            "mag_id": record.get("formatted_spire_id"),
-            "bin_id": record.get("bin_id"),
-			"bin_path": record.get("bin_path"),
-        }
+		# "bin_data": { 			
+        #     "mag_id": record.get("formatted_spire_id"),
+        #     "bin_id": record.get("bin_id"),
+		# 	"bin_path": record.get("bin_path"),
+        # }
 		
 	}
 

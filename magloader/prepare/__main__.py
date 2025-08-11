@@ -56,6 +56,8 @@ def main():
 	assembly_dir = pathlib.Path(args.workdir) / "assemblies"
 	_, dirs, _ = next(os.walk(assembly_dir))
 
+	mags = {}
+
 	for d in dirs:
 
 
@@ -79,25 +81,40 @@ def main():
 			"spire_vstudy": manifest.get("STUDY"),
 			"spire_vsample": manifest.get("SAMPLE"),
 		}
+
 		if len(sample_d["biosamples"]) > 1:
 			raise ValueError("TOO MANY BIOSAMPLES")
+		
+
 		bins = list(db.bins.find({"sample_id": sample_d["biosamples"][0]}))
 		
 		pprint.pprint(sample_d)
 		if bins:
-			pprint.pprint(sample_d)
+			# pprint.pprint(sample_d)
 			for spire_bin in bins:
-				pprint.pprint(spire_bin)
-
-				pprint.pprint(
-					get_attributes(
+				# pprint.pprint(spire_bin)
+				
+				sample_attribs = get_attributes(
 						spire_bin,
 						biosamples,
 						sample_d["assemblyname"],
 						study_d["study_id"],
 						spire_sample_id,
 						sample_d["spire_vstudy"],
-						erz_id,))
+						erz_id,)
+
+				bin_data = { 			
+        			"mag_id": spire_bin.get("formatted_spire_id"),
+        			"bin_id": spire_bin.get("bin_id"),
+					"bin_path": spire_bin.get("bin_path"),
+				}
+				bin_id = bin_data.get("bin_id")
+				mags.setdefault(spire_sample_id, {})[bin_id] = {}
+				mags[spire_sample_id][bin_id].update(sample_d)
+				mags[spire_sample_id][bin_id].update(bin_data)
+				mags[spire_sample_id][bin_id]["attribs"] = sample_attribs
+				pprint.pprint(mags)
+				
 				break
 			break	
 		# break
