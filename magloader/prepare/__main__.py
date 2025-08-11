@@ -100,7 +100,8 @@ def main():
 		bins = list(mongo_db.bins.find({"sample_id": sample_d["biosamples"][0]}))
 		
 		if bins:
-			for spire_bin in bins:
+			for i, spire_bin in enumerate(bins, start=1):
+				print(f"Processing bin {spire_bin['bin_id']} ({i}/{len(bins)})", flush=True,)
 				sample_attribs = get_attributes(
 						spire_bin,
 						biosamples,
@@ -122,7 +123,7 @@ def main():
 				bin_data = { 			
         			"mag_id": spire_bin.get("formatted_spire_id"),
         			"bin_id": bin_id,
-					"bin_path": bin_path,
+					"bin_path": str(bin_path.absolute()),
 				}
 
 				mags.setdefault(spire_sample_id, {})[bin_id] = {}
