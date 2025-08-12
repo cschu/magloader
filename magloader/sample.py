@@ -176,12 +176,20 @@ class MagSample(Sample):
         db = maker.DB
         id_ = maker.ID
 
+        attribs = []
+        for k, v in self.attributes.items():
+            if isinstance(v, tuple):
+                attrib = maker.SAMPLE_ATTRIBUTE(maker.TAG(k), maker.VALUE(v[0]), maker.UNITS(v[1]))
+            else:
+                attrib = maker.SAMPLE_ATTRIBUTE(maker.TAG(k), maker.VALUE(v[0]))
+            attribs.append(attrib)
+
         doc = maker.SAMPLE(
             maker.TITLE(self.get_title()),
             maker.SAMPLE_NAME(
                 maker.TAXON_ID(self.taxon_id),
             ),
-            maker.DESCRIPTION(self.get_description()),
+            # maker.DESCRIPTION(self.get_description()),
             # maker.SAMPLE_LINKS(
             #     *(
             #         sample_link(
@@ -207,14 +215,15 @@ class MagSample(Sample):
             #         )
             #     ),
             # ),
-            maker.SAMPLE_ATTRIBUTES(
-                *(
-                    maker.SAMPLE_ATTRIBUTE(
-                        maker.TAG(k), maker.VALUE(v)
-                    )
-                    for k, v in self.attributes.items()
-                )
-            ),
+            maker.SAMPLE_ATTRIBUTES(*attribs),
+            # maker.SAMPLE_ATTRIBUTES(
+            #     *(
+            #         maker.SAMPLE_ATTRIBUTE(
+            #             maker.TAG(k), maker.VALUE(v)
+            #         )
+            #         for k, v in self.attributes.items()
+            #     )
+            # ),
             alias=f"{self.sample_id}",  # mag_id
             center_name=self.center_name,
         )
