@@ -161,7 +161,7 @@ class MagSample(Sample):
         self.attributes["metagenomic source"] = "408169"  # ?
         self.attributes.update(attributes)
 
-        self.gtdb_taxonomy = attributes.get("axonomic classification", "unknown organism")
+        self.gtdb_taxonomy = attributes.get("taxonomic classification", "unknown organism")
 
 
 
