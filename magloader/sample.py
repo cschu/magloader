@@ -215,7 +215,7 @@ class MagSample(Sample):
                     for k, v in self.attributes.items()
                 )
             ),
-            alias=f"spire_sample_{self.sample_id}",
+            alias=f"{self.sample_id}",  # mag_id
             center_name=self.center_name,
         )
 
