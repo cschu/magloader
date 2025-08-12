@@ -14,16 +14,16 @@ def check_assemblies(biosamples, assemblies):
             raise ValueError(f"{biosample.alias} does not have an assembly!")
         yield biosample.accession, assembly
 
-def prepare_manifest_files(study_id, assemblies, workdir):
+def prepare_manifest_files(study_id, assemblies, workdir, mags=False,):
     for biosample_accession, assembly in assemblies:
-        assembly_dir = workdir / "assemblies" / assembly.assembly_name
+        assembly_dir = workdir / ("mags" if mags else "assemblies") / assembly.assembly_name
         assembly_done = assembly_dir / "DONE"
         if not assembly_done.is_file():
             assembly_dir.mkdir(parents=True, exist_ok=True,)
             manifest_file = pathlib.Path(assembly_dir / f"{assembly.assembly_name}.manifest.txt")
             if not manifest_file.is_file():
                 with open(manifest_file, "wt") as _out:
-                    manifest = Manifest.from_assembly(assembly, study_id, biosample_accession)
+                    manifest = Manifest.from_assembly(assembly, study_id, biosample_accession, mags=mags,)
                     print(manifest.to_str(), file=_out,)
                 print(manifest)
             yield manifest_file
