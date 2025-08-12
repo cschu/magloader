@@ -184,7 +184,7 @@ def main():
                         spire_ena_project_id=study_id,
                         sample_id=mag["mag_id"],
                         biosamples=mag["biosamples"],
-                        attributes=mag["attributes"],
+                        attributes=mag["attribs"],
                     )
                 )
 
