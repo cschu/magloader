@@ -142,9 +142,12 @@ def main():
 				cursor.execute(
 					"SELECT average_bin_coverage.avg_coverage "
 					"FROM bins "
+					"JOIN versions.spirev1_bins "
+					"ON bins.id = versions.spirev1_bins.bin_id "
 					"LEFT OUTER JOIN average_bin_coverage "
 					"ON bins.id = average_bin_coverage.bin_id "
-					f"WHERE bins.bin_name = '{bin_id}';"
+					f"WHERE bins.bin_name = '{bin_id}' "
+					"AND versions.spirev1_bins.included_in_spire;"
 				)
 				coverage = list(cursor.fetchall())[0][0] or -1.0
 				mags[bin_id]["coverage"] = float(coverage)
