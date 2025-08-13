@@ -106,9 +106,10 @@ def main():
 		bins = list(mongo_db.bins.find({"sample_id": sample_d["biosamples"][0]}))
 		
 		if bins:
+			n_bins = len(bins)
 			for i, spire_bin in enumerate(bins, start=1):
 				bin_id = spire_bin.get("bin_id")
-				print(f"Processing bin {bin_id} ({i}/{len(bins)})", flush=True,)
+				print(f"Processing bin {bin_id} ({i}/{n_bins})", flush=True,)
 				mag_id = spire_bin.get("formatted_spire_id")
 
 				cursor.execute(
@@ -124,6 +125,7 @@ def main():
 				results = list(cursor.fetchall())
 				if not results:
 					print(f"bin {bin_id} is not included in spire -> discarding")
+					n_bins -= 1
 					continue
 
 				# coverage = list(cursor.fetchall())[0][0] or -1.0
