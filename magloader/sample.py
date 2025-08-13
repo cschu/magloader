@@ -178,10 +178,10 @@ class MagSample(Sample):
 
         attribs = []
         for k, v in self.attributes.items():
-            if isinstance(v, tuple):
-                attrib = maker.SAMPLE_ATTRIBUTE(maker.TAG(k), maker.VALUE(v[0]), maker.UNITS(v[1]))
+            if isinstance(v, str):
+                attrib = maker.SAMPLE_ATTRIBUTE(maker.TAG(k), maker.VALUE(v))
             else:
-                attrib = maker.SAMPLE_ATTRIBUTE(maker.TAG(k), maker.VALUE(v[0]))
+                attrib = maker.SAMPLE_ATTRIBUTE(maker.TAG(k), maker.VALUE(v[0]), maker.UNITS(v[1]))
             attribs.append(attrib)
 
         doc = maker.SAMPLE(
