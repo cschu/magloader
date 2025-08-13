@@ -103,37 +103,56 @@ def main():
 		json_d["vstudy_id"] = manifest.get("STUDY")
 		json_d["spire_sample"] = spire_sample_id
 
+		cursor.execute(
+			"SELECT bins.bin_name, average_bin_coverage.avg_coverage "
+			"FROM bins "
+			"JOIN versions.spirev1_bins "
+			"ON bins.id = versions.spirev1_bins.bin_id "
+			"LEFT OUTER JOIN average_bin_coverage "
+			"ON bins.id = average_bin_coverage.bin_id "
+			f"WHERE bins.sample_id = {spire_sample_id} "
+			"AND versions.spirev1_bins.included_in_spire;"
+		)
+		coverages = {
+			k: (v if v is not None else -1.0)
+			for k, v in cursor.fetchall()
+		}
+
+
 		bins = list(mongo_db.bins.find({"sample_id": sample_d["biosamples"][0]}))
 		
 		if bins:
 			n_bins = len(bins)
+			discarded = 0
 			for i, spire_bin in enumerate(bins, start=1):
 				bin_id = spire_bin.get("bin_id")
 				mag_id = spire_bin.get("formatted_spire_id")
 
-				cursor.execute(
-					"SELECT average_bin_coverage.avg_coverage "
-					"FROM bins "
-					"JOIN versions.spirev1_bins "
-					"ON bins.id = versions.spirev1_bins.bin_id "
-					"LEFT OUTER JOIN average_bin_coverage "
-					"ON bins.id = average_bin_coverage.bin_id "
-					f"WHERE bins.bin_name = '{bin_id}' "
-					"AND versions.spirev1_bins.included_in_spire;"
-				)
-				results = list(cursor.fetchall())
-				if not results:
+				# cursor.execute(
+				# 	"SELECT average_bin_coverage.avg_coverage "
+				# 	"FROM bins "
+				# 	"JOIN versions.spirev1_bins "
+				# 	"ON bins.id = versions.spirev1_bins.bin_id "
+				# 	"LEFT OUTER JOIN average_bin_coverage "
+				# 	"ON bins.id = average_bin_coverage.bin_id "
+				# 	f"WHERE bins.bin_name = '{bin_id}' "
+				# 	"AND versions.spirev1_bins.included_in_spire;"
+				# )
+				# results = list(cursor.fetchall())
+				# if not results:
+				coverage = coverages.get(bin_id)
+				if not coverage:
 					print(f"bin {bin_id} is not included in spire -> discarding")
 					n_bins -= 1
-					i -= 1
+					discarded += 1
 					continue
 
-				print(f"Processing bin {bin_id} ({i}/{n_bins})", flush=True,)
+				print(f"Processing bin {bin_id} ({i - discarded}/{n_bins})", flush=True,)
 				# coverage = list(cursor.fetchall())[0][0] or -1.0
-				try:
-					coverage = results[0][0]
-				except:
-					coverage = -1.0
+				# try:
+				# 	coverage = results[0][0]
+				# except:
+				# 	coverage = -1.0
 				
 				sample_attribs = get_attributes(
 					spire_bin,
