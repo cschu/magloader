@@ -150,28 +150,18 @@ def main():
         sample_set = SampleSet()
         sample_set.samples += (assembly.get_sample() for assembly in assemblies.values())
 
-        print(lxml.etree.tostring(sample_set.toxml()).decode())
+        # print(lxml.etree.tostring(sample_set.toxml()).decode())
 
         biosamples = register_samples(sample_set, workdir, "samples", user, pw, args.hold_date, run_on_dev_server, args.timeout)
 
 
         # validate and submit assemblies
-        print(assemblies)
+        # print(assemblies)
 
         assemblies = list(check_assemblies(biosamples, assemblies))
         manifests = list(prepare_manifest_files(study_id, assemblies, workdir))
 
         process_uploads(manifests, process_manifest_partial, args.threads, mags=False,)
-
-        # with open("assembly_accessions.txt", "wt") as _out:
-        #     for i, ena_id, messages, manifest in upload(manifests, process_manifest_partial, threads=args.threads):
-        #         if ena_id is not None:
-        #             print(i, i/len(manifests), "ENA-ID", ena_id,)
-        #             print(ena_id, manifest, sep="\t", file=_out)
-        #         else:
-        #             print(i, i/len(manifests), *messages, sep="\n",)
-        #         print("-----------------------------------------------------")
-
 
     elif input_data.get("vstudy_id"):
         study_id = input_data["vstudy_id"]
@@ -201,15 +191,15 @@ def main():
                     )
                 )
 
-        print(lxml.etree.tostring(sample_set.toxml()).decode())
+        # print(lxml.etree.tostring(sample_set.toxml()).decode())
         biosamples = register_samples(sample_set, workdir, f"vsamples/{input_data['spire_sample']}", user, pw, args.hold_date, run_on_dev_server, args.timeout)
 
         # validate and submit assemblies
-        print(assemblies)
+        # print(assemblies)
 
         assemblies = list(check_assemblies(biosamples, assemblies))
 
-        print(assemblies)
+        # print(assemblies)
 
         manifests = list(prepare_manifest_files(study_id, assemblies, workdir, mags=True,))
 
