@@ -196,6 +196,8 @@ def main():
 
         assemblies = list(check_assemblies(biosamples, assemblies))
 
+        print(assemblies)
+
 
     return None
 
