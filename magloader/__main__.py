@@ -49,13 +49,14 @@ def register_object(user, pw, obj, obj_type, hold_date=None, dev=True, timeout=6
 def register_samples(sample_set, workdir, sample_dir, user, pw, hold_date, run_on_dev_server, timeout):
     # register biosamples
     biosamples = []
-    sample_dir = pathlib.Path(workdir / sample_dir)
-    sample_dir.mkdir(exist_ok=True, parents=True,)
-    with working_directory(sample_dir):
-        biosamples = register_object(user, pw, sample_set, "sample", hold_date=hold_date, dev=run_on_dev_server, timeout=timeout,)
-        biosamples = list(biosamples)
+    if not sample_set.is_empty():
+        sample_dir = pathlib.Path(workdir / sample_dir)
+        sample_dir.mkdir(exist_ok=True, parents=True,)
+        with working_directory(sample_dir):
+            biosamples = register_object(user, pw, sample_set, "sample", hold_date=hold_date, dev=run_on_dev_server, timeout=timeout,)
+            biosamples = list(biosamples)
 
-    print(biosamples, sep="\n")
+        print(biosamples, sep="\n")
     return biosamples
 
 
@@ -196,14 +197,14 @@ def main():
 
         # validate and submit assemblies
         # print(assemblies)
+        if biosamples:
+            assemblies = list(check_assemblies(biosamples, assemblies))
 
-        assemblies = list(check_assemblies(biosamples, assemblies))
+            # print(assemblies)
 
-        # print(assemblies)
+            manifests = list(prepare_manifest_files(study_id, assemblies, workdir, mags=True,))
 
-        manifests = list(prepare_manifest_files(study_id, assemblies, workdir, mags=True,))
-
-        process_uploads(manifests, process_manifest_partial, args.threads, mags=True,)
+            process_uploads(manifests, process_manifest_partial, args.threads, mags=True,)
 
 
 

@@ -19,6 +19,9 @@ class SampleSet:
 
     def get_base(self):
         return self.__class__
+    
+    def is_empty(self):
+        return not self.samples
 
     @staticmethod
     def parse_submission_response(response):
