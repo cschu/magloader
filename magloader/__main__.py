@@ -198,6 +198,9 @@ def main():
 
         print(assemblies)
 
+        manifests = list(prepare_manifest_files(study_id, assemblies, workdir, mags=True,))
+
+
 
     return None
 
