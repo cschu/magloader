@@ -1,3 +1,9 @@
+def convert_percentage_to_ena_compatible_value(n):
+	if int(n) >= 100:
+		return "100"
+	return f"{n:.02f}"
+	
+
 def get_attributes(
 	record,
 	sample_ids,
@@ -9,8 +15,8 @@ def get_attributes(
 ):
 
 	spire_cluster = record.get("spire_v1_cluster", {}).get("name")
-	checkm2_completeness = record.get("checkm2", {}).get("Completeness")
-	checkm2_contamination = record.get("checkm2", {}).get("Contamination")
+	checkm2_completeness = convert_percentage_to_ena_compatible_value(record.get("checkm2", {}).get("Completeness"))
+	checkm2_contamination = convert_percentage_to_ena_compatible_value(record.get("checkm2", {}).get("Contamination"))
 	n50 = record.get("checkm2", {}).get("N50")
 	n_contigs = record.get("checkm2", {}).get("number")
 	gunc_contamination = record.get("gunc", {}).get("contamination_portion")
