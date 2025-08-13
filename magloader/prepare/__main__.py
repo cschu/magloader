@@ -109,7 +109,6 @@ def main():
 			n_bins = len(bins)
 			for i, spire_bin in enumerate(bins, start=1):
 				bin_id = spire_bin.get("bin_id")
-				print(f"Processing bin {bin_id} ({i}/{n_bins})", flush=True,)
 				mag_id = spire_bin.get("formatted_spire_id")
 
 				cursor.execute(
@@ -126,8 +125,10 @@ def main():
 				if not results:
 					print(f"bin {bin_id} is not included in spire -> discarding")
 					n_bins -= 1
+					i -= 1
 					continue
 
+				print(f"Processing bin {bin_id} ({i}/{n_bins})", flush=True,)
 				# coverage = list(cursor.fetchall())[0][0] or -1.0
 				try:
 					coverage = results[0][0]
