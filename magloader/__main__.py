@@ -85,6 +85,17 @@ def register_study(study_data, workdir, user, pw, hold_date, run_on_dev_server):
     
     return study_id
 
+def process_uploads(manifests, upload_f, threads, mags=False,):
+    prefix = "mag" if mags else "assembly"
+    with open(f"{prefix}_accessions.txt", "wt") as _out:
+        for i, ena_id, messages, manifest in upload(manifests, upload_f, threads):
+            if ena_id is not None:
+                print(i, i/len(manifests), "ENA-ID", ena_id,)
+                print(ena_id, manifest, sep="\t", file=_out)
+            else:
+                print(i, i/len(manifests), *messages, sep="\n",)
+            print("-----------------------------------------------------")
+
 
 def main():
     ap = argparse.ArgumentParser()
@@ -105,6 +116,16 @@ def main():
     run_on_dev_server = not args.ena_live
 
     user, pw = get_webin_credentials(args.webin_credentials)
+
+    process_manifest_partial = partial(
+        process_manifest,
+        user=user,
+        password=pw,
+        submit=True,
+        run_on_dev_server=run_on_dev_server,
+        java_max_heap=args.java_max_heap,
+    )
+    print(process_manifest_partial)
     
     workdir = pathlib.Path(args.workdir)
     if workdir.is_dir():
@@ -140,24 +161,16 @@ def main():
         assemblies = list(check_assemblies(biosamples, assemblies))
         manifests = list(prepare_manifest_files(study_id, assemblies, workdir))
 
-        process_manifest_partial = partial(
-            process_manifest,
-            user=user,
-            password=pw,
-            submit=True,
-            run_on_dev_server=run_on_dev_server,
-            java_max_heap=args.java_max_heap,
-        )
-        print(process_manifest_partial)
+        process_uploads(manifests, process_manifest_partial, args.threads, mags=False,)
 
-        with open("assembly_accessions.txt", "wt") as _out:
-            for i, ena_id, messages, manifest in upload(manifests, process_manifest_partial, threads=args.threads):
-                if ena_id is not None:
-                    print(i, i/len(manifests), "ENA-ID", ena_id,)
-                    print(ena_id, manifest, sep="\t", file=_out)
-                else:
-                    print(i, i/len(manifests), *messages, sep="\n",)
-                print("-----------------------------------------------------")
+        # with open("assembly_accessions.txt", "wt") as _out:
+        #     for i, ena_id, messages, manifest in upload(manifests, process_manifest_partial, threads=args.threads):
+        #         if ena_id is not None:
+        #             print(i, i/len(manifests), "ENA-ID", ena_id,)
+        #             print(ena_id, manifest, sep="\t", file=_out)
+        #         else:
+        #             print(i, i/len(manifests), *messages, sep="\n",)
+        #         print("-----------------------------------------------------")
 
 
     elif input_data.get("vstudy_id"):
@@ -199,6 +212,8 @@ def main():
         print(assemblies)
 
         manifests = list(prepare_manifest_files(study_id, assemblies, workdir, mags=True,))
+
+        process_uploads(manifests, process_manifest_partial, args.threads, mags=True,)
 
 
 
