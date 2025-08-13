@@ -107,18 +107,41 @@ def main():
 		
 		if bins:
 			for i, spire_bin in enumerate(bins, start=1):
-				print(f"Processing bin {spire_bin['bin_id']} ({i}/{len(bins)})", flush=True,)
-				mag_id = spire_bin.get("formatted_spire_id")
-				sample_attribs = get_attributes(
-						spire_bin,
-						biosamples,
-						mag_id,
-						study_d["study_id"],
-						spire_sample_id,
-						sample_d["spire_vstudy"],
-						erz_id,)
-				
 				bin_id = spire_bin.get("bin_id")
+				print(f"Processing bin {bin_id} ({i}/{len(bins)})", flush=True,)
+				mag_id = spire_bin.get("formatted_spire_id")
+
+				cursor.execute(
+					"SELECT average_bin_coverage.avg_coverage "
+					"FROM bins "
+					"JOIN versions.spirev1_bins "
+					"ON bins.id = versions.spirev1_bins.bin_id "
+					"LEFT OUTER JOIN average_bin_coverage "
+					"ON bins.id = average_bin_coverage.bin_id "
+					f"WHERE bins.bin_name = '{bin_id}' "
+					"AND versions.spirev1_bins.included_in_spire;"
+				)
+				results = list(cursor.fetchall())
+				if not results:
+					print(f"bin {bin_id} is not included in spire -> discarding")
+					continue
+
+				# coverage = list(cursor.fetchall())[0][0] or -1.0
+				try:
+					coverage = results[0][0]
+				except:
+					coverage = -1.0
+				
+				sample_attribs = get_attributes(
+					spire_bin,
+					biosamples,
+					mag_id,
+					study_d["study_id"],
+					spire_sample_id,
+					sample_d["spire_vstudy"],
+					erz_id,
+				)
+				
 				original_bin_path = spire_bin.get("bin_path")
 
 				bin_path = mag_dir / pathlib.Path(original_bin_path).name
@@ -139,17 +162,6 @@ def main():
 				mags[bin_id].update(bin_data)
 				mags[bin_id]["attribs"] = sample_attribs
 
-				cursor.execute(
-					"SELECT average_bin_coverage.avg_coverage "
-					"FROM bins "
-					"JOIN versions.spirev1_bins "
-					"ON bins.id = versions.spirev1_bins.bin_id "
-					"LEFT OUTER JOIN average_bin_coverage "
-					"ON bins.id = average_bin_coverage.bin_id "
-					f"WHERE bins.bin_name = '{bin_id}' "
-					"AND versions.spirev1_bins.included_in_spire;"
-				)
-				coverage = list(cursor.fetchall())[0][0] or -1.0
 				mags[bin_id]["coverage"] = float(coverage)
 				mags[bin_id]["program"] = "megahit"
 				mags[bin_id]["program_version"] = "1.2.9"
