@@ -168,7 +168,7 @@ def main():
         assemblies = {}
         for i, (bin_id, mag) in enumerate(input_data["mags"].items()):
             if not run_on_dev_server or (args.dryruns <= 0 or i < args.dryruns):
-                assemblies[bin_id] = Assembly(
+                assemblies[mag["mag_id"]] = Assembly(
                     spire_ena_project_id=study_id,
                     sample_id=input_data["spire_sample"],
                     assembly_name=mag["mag_id"],
