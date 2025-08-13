@@ -191,6 +191,10 @@ def main():
         print(lxml.etree.tostring(sample_set.toxml()).decode())
         biosamples = register_samples(sample_set, workdir, f"vsamples/{input_data['spire_sample']}", user, pw, args.hold_date, run_on_dev_server, args.timeout)
 
+        # validate and submit assemblies
+        print(assemblies)
+
+        assemblies = list(check_assemblies(biosamples, assemblies))
 
 
     return None
