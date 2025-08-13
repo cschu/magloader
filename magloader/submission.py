@@ -75,7 +75,18 @@ class SubmissionResponse:
     @classmethod
     def from_json(cls, json_str):
         obj = SubmissionResponse(**json.loads(json_str))
+        if obj.submission_accession is None:
+            raise ValueError("Submission failed.")
         obj.objects = [SubmissionResponseObject(**o) for o in obj.objects]
+
+        # {
+        #     "receipt_date": "2025-08-13T13:55:51.759+01:00",
+        #     "success": false, 
+        #     "objects": [], 
+        #     "messages": [["ERROR", "Sample: spire_mag_01046565; Attribute: completeness score; Reason: must match pattern \"^(\\d|[1-9]\\d|\\d\\.\\d{1,2}|[1-9]\\d\\.\\d{1,2}|100)$\""], ["ERROR", "Sample: spire_mag_01046588; Attribute: completeness score; Reason: must match pattern \"^(\\d|[1-9]\\d|\\d\\.\\d{1,2}|[1-9]\\d\\.\\d{1,2}|100)$\""], ["ERROR", "Sample: spire_mag_01046652; Attribute: completeness score; Reason: must match pattern \"^(\\d|[1-9]\\d|\\d\\.\\d{1,2}|[1-9]\\d\\.\\d{1,2}|100)$\""], ["ERROR", "Sample: spire_mag_01046652; Attribute: contamination score; Reason: must match pattern \"^(\\d|[1-9]\\d|\\d\\.\\d{1,2}|[1-9]\\d\\.\\d{1,2}|100)$\""], ["ERROR", "Sample: spire_mag_01046669; Attribute: completeness score; Reason: must match pattern \"^(\\d|[1-9]\\d|\\d\\.\\d{1,2}|[1-9]\\d\\.\\d{1,2}|100)$\""], ["ERROR", "Sample: spire_mag_01046701; Attribute: completeness score; Reason: must match pattern \"^(\\d|[1-9]\\d|\\d\\.\\d{1,2}|[1-9]\\d\\.\\d{1,2}|100)$\""], ["ERROR", "Sample: spire_mag_01046716; Attribute: completeness score; Reason: must match pattern \"^(\\d|[1-9]\\d|\\d\\.\\d{1,2}|[1-9]\\d\\.\\d{1,2}|100)$\""], ["ERROR", "Sample: spire_mag_01046716; Attribute: contamination score; Reason: must match pattern \"^(\\d|[1-9]\\d|\\d\\.\\d{1,2}|[1-9]\\d\\.\\d{1,2}|100)$\""], ["ERROR", "Sample: spire_mag_01046759; Attribute: completeness score; Reason: must match pattern \"^(\\d|[1-9]\\d|\\d\\.\\d{1,2}|[1-9]\\d\\.\\d{1,2}|100)$\""], ["ERROR", "Sample: spire_mag_01046759; Attribute: contamination score; Reason: must match pattern \"^(\\d|[1-9]\\d|\\d\\.\\d{1,2}|[1-9]\\d\\.\\d{1,2}|100)$\""], ["ERROR", "Failed to submit samples to BioSamples"], ["INFO", "All objects in this submission are set to private status (HOLD)."]],
+        #     "submission_alias": "SUBMISSION-13-08-2025-13:55:43:207", 
+        #     "submission_accession": null
+        # }
         return obj
 
 
