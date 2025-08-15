@@ -115,6 +115,7 @@ def main():
     ap.add_argument("--threads", type=int, default=1)
     ap.add_argument("--java_max_heap", type=str, default=None,)
     ap.add_argument("--timeout", type=int, default=60,)
+    ap.add_argument("--use_ascp", action="store_true",)
 
     args = ap.parse_args()
 
@@ -142,6 +143,7 @@ def main():
         submit=True,
         run_on_dev_server=run_on_dev_server,
         java_max_heap=args.java_max_heap,
+        use_ascp=args.use_ascp,
     )
     print(process_manifest_partial)
     
