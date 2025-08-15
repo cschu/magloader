@@ -88,6 +88,7 @@ def register_study(study_data, workdir, user, pw, hold_date, run_on_dev_server):
 
 def process_uploads(manifests, upload_f, threads, mags=False,):
     prefix = "mag" if mags else "assembly"
+    all_done = True
     with open(f"{prefix}_accessions.txt", "wt") as _out:
         for i, ena_id, messages, manifest in upload(manifests, upload_f, threads):
             if ena_id is not None:
@@ -95,7 +96,10 @@ def process_uploads(manifests, upload_f, threads, mags=False,):
                 print(ena_id, manifest, sep="\t", file=_out)
             else:
                 print(i, i/len(manifests), *messages, sep="\n",)
+                all_done = False
             print("-----------------------------------------------------")
+
+    return all_done
 
 
 def main():
@@ -114,6 +118,19 @@ def main():
 
     args = ap.parse_args()
 
+    if pathlib.Path(f"{args.input_json}.DONE").is_file() and not args.override:
+        print(
+            f"Input '{args.input_json}' is tagged as DONE. "
+            f"Either remove '{args.input_json}.DONE' or use `--override` to continue. Exiting."
+        )
+
+    with open(args.input_json, "rt", encoding="UTF-8",) as json_in:
+        input_data = json.load(json_in)
+
+    if not (input_data.get("mags") or input_data.get("assemblies")):
+        print(f"Input '{args.input_json}' does not contain assembly data. Exiting.")
+        return None
+
     run_on_dev_server = not args.ena_live
 
     user, pw = get_webin_credentials(args.webin_credentials)
@@ -129,14 +146,12 @@ def main():
     print(process_manifest_partial)
     
     workdir = pathlib.Path(args.workdir)
-    if workdir.is_dir():
-        if args.override:
-            raise NotImplementedError("Workdir override not implemented.")
-    else:
-        workdir.mkdir(parents=True)
+    # if workdir.is_dir():
+    #     if args.override:
+    #         raise NotImplementedError("Workdir override not implemented.")
+    # else:
+    workdir.mkdir(parents=True, exist_ok=True)
 
-    with open(args.input_json, "rt", encoding="UTF-8",) as json_in:
-        input_data = json.load(json_in)
 
 
     if input_data.get("study_id"):
@@ -162,7 +177,9 @@ def main():
         assemblies = list(check_assemblies(biosamples, assemblies))
         manifests = list(prepare_manifest_files(study_id, assemblies, workdir))
 
-        process_uploads(manifests, process_manifest_partial, args.threads, mags=False,)
+        all_done = process_uploads(manifests, process_manifest_partial, args.threads, mags=False,)
+        if all_done:
+            pathlib.Path(f"{args.input_json}.DONE").touch()
 
     elif input_data.get("vstudy_id"):
         study_id = input_data["vstudy_id"]
@@ -204,7 +221,9 @@ def main():
 
             manifests = list(prepare_manifest_files(study_id, assemblies, workdir, mags=True,))
 
-            process_uploads(manifests, process_manifest_partial, args.threads, mags=True,)
+            all_done = process_uploads(manifests, process_manifest_partial, args.threads, mags=True,)
+            if all_done:
+                pathlib.Path(f"{args.input_json}.DONE").touch()
 
 
 
