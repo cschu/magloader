@@ -124,6 +124,7 @@ def main():
             f"Input '{args.input_json}' is tagged as DONE. "
             f"Either remove '{args.input_json}.DONE' or use `--override` to continue. Exiting."
         )
+        return None
 
     with open(args.input_json, "rt", encoding="UTF-8",) as json_in:
         input_data = json.load(json_in)
