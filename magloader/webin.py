@@ -22,7 +22,7 @@ class EnaWebinClient:
         self.username = username
         self.password = password
 
-    def _run_client(self, manifest, validate=True, dev=True, java_max_heap=None, use_ascp=False,):
+    def _run_client(self, manifest, validate=True, dev=True, java_max_heap=None, use_ascp=False, timeout=None,):
         mode = "-validate" if validate else "-submit"
         server = "-test" if dev else ""
         ascp = "-ascp" if use_ascp else ""
@@ -31,7 +31,7 @@ class EnaWebinClient:
         print(f"CMD: `{cmd}`")
 
         try:
-            proc = subprocess.run(shlex.split(cmd), check=True, capture_output=True,)
+            proc = subprocess.run(shlex.split(cmd), check=True, capture_output=True, timeout=timeout,)
         except subprocess.CalledProcessError as err:
             pass
 
@@ -71,9 +71,9 @@ class EnaWebinClient:
 
         return False, messages
 
-    def submit(self, manifest, dev=True, java_max_heap=None, use_ascp=False,):
+    def submit(self, manifest, dev=True, java_max_heap=None, use_ascp=False, timeout=300,):
         try:
-            proc = self._run_client(manifest, validate=False, dev=dev, java_max_heap=java_max_heap, use_ascp=use_ascp,)
+            proc = self._run_client(manifest, validate=False, dev=dev, java_max_heap=java_max_heap, use_ascp=use_ascp, timeout=timeout,)
         except subprocess.CalledProcessError as err:
             print("CAUGHT CALLED_PROCESS_ERROR:\n", err)
         else:
