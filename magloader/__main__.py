@@ -118,6 +118,8 @@ def main():
     ap.add_argument("--use_ascp", action="store_true",)
     ap.add_argument("--daymode", action="store_true",)
 
+    args = ap.parse_args()
+    
     if args.daymode:
         sleep = 3
         threads = min(args.threads, 2)
@@ -125,7 +127,6 @@ def main():
         sleep = None
         threads = args.threads
 
-    args = ap.parse_args()
 
     if pathlib.Path(f"{args.input_json}.DONE").is_file() and not args.override:
         print(
