@@ -131,6 +131,7 @@ def main():
 
     if not (input_data.get("mags") or input_data.get("assemblies")):
         print(f"Input '{args.input_json}' does not contain assembly data. Exiting.")
+        pathlib.Path(f"{args.input_json}.DONE").touch()
         return None
 
     run_on_dev_server = not args.ena_live
