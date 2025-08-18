@@ -116,6 +116,14 @@ def main():
     ap.add_argument("--java_max_heap", type=str, default=None,)
     ap.add_argument("--timeout", type=int, default=60,)
     ap.add_argument("--use_ascp", action="store_true",)
+    ap.add_argument("--daymode", action="store_true",)
+
+    if args.daymode:
+        sleep = 3
+        threads = min(args.threads, 2)
+    else:
+        sleep = None
+        threads = args.threads
 
     args = ap.parse_args()
 
@@ -146,6 +154,7 @@ def main():
         run_on_dev_server=run_on_dev_server,
         java_max_heap=args.java_max_heap,
         use_ascp=args.use_ascp,
+        sleep=sleep,
     )
     print(process_manifest_partial)
     
@@ -181,7 +190,7 @@ def main():
         assemblies = list(check_assemblies(biosamples, assemblies))
         manifests = list(prepare_manifest_files(study_id, assemblies, workdir))
 
-        all_done = process_uploads(manifests, process_manifest_partial, args.threads, mags=False,)
+        all_done = process_uploads(manifests, process_manifest_partial, threads, mags=False,)
         if all_done:
             pathlib.Path(f"{args.input_json}.DONE").touch()
 
@@ -225,7 +234,7 @@ def main():
 
             manifests = list(prepare_manifest_files(study_id, assemblies, workdir, mags=True,))
 
-            all_done = process_uploads(manifests, process_manifest_partial, args.threads, mags=True,)
+            all_done = process_uploads(manifests, process_manifest_partial, threads, mags=True,)
             if all_done:
                 pathlib.Path(f"{args.input_json}.DONE").touch()
 
