@@ -73,6 +73,7 @@ def main():
 			"vstudy_id": None,
 			"spire_sample": None,
 			"mags": {},
+			"status": "ok",
 		}
 		mags = json_d["mags"]
 
@@ -87,7 +88,9 @@ def main():
 			try:
 				erz_id = erz_match.group(1)
 			except AttributeError:
-				raise ValueError("NO ERZ MATCH!")
+				# raise ValueError("NO ERZ MATCH!")
+				erz_id = None
+				json_d["status"] = "No ERZ assigned."
 
 		spire_sample_id, biosamples = samples.get(manifest["ASSEMBLYNAME"])
 		sample_d = {
