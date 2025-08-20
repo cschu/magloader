@@ -61,6 +61,8 @@ class EnaWebinClient:
             proc = self._run_client(manifest, validate=True, dev=dev, java_max_heap=java_max_heap,)
         except subprocess.CalledProcessError as err:
             print("CAUGHT CALLED_PROCESS_ERROR:\n", err)
+        except subprocess.TimeoutExpired as err:
+            print("TIMEOUT:\n", err)
         else:
             print("PROC", proc)
         finally:
@@ -76,6 +78,8 @@ class EnaWebinClient:
             proc = self._run_client(manifest, validate=False, dev=dev, java_max_heap=java_max_heap, use_ascp=use_ascp, timeout=timeout,)
         except subprocess.CalledProcessError as err:
             print("CAUGHT CALLED_PROCESS_ERROR:\n", err)
+        except subprocess.TimeoutExpired as err:
+            print("TIMEOUT:\n", err)
         else:
             print("PROC", proc)
         finally:
