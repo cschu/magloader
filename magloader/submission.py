@@ -111,8 +111,8 @@ class Submission:
 
         submission_xml = Submission.generate_submission(hold_date=self.hold_date, release=release,)
 
-        prefix = f"release.{release}." if release is not None else ""
-        with open(f"{prefix}submission.xml", "wt") as _out:
+        sub_fn = f"{release}.release.xml" if release is not None else "submission.xml"
+        with open(sub_fn, "wt") as _out:
             _out.write(submission_xml)
 
         files = {
