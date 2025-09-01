@@ -110,7 +110,9 @@ class Submission:
         url = f"https://www{('', 'dev')[self.dev]}.ebi.ac.uk/ena/submit/drop-box/submit/"
 
         submission_xml = Submission.generate_submission(hold_date=self.hold_date, release=release,)
-        with open("submission.xml", "wt") as _out:
+
+        prefix = f"release.{release}." if release is not None else ""
+        with open(f"{prefix}submission.xml", "wt") as _out:
             _out.write(submission_xml)
 
         files = {
