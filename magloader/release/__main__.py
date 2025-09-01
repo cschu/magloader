@@ -8,7 +8,7 @@ from ..webin import get_webin_credentials
 
 def main():
 	ap = argparse.ArgumentParser()
-	ap.add_argument("study_id", type=int)
+	ap.add_argument("study_id", type=str)
 	ap.add_argument("webin_credentials", type=str)
 	ap.add_argument("--workdir", "-w", type=str, default="work")
 	ap.add_argument("--hold_date", type=str, default=datetime.today().strftime('%Y-%m-%d'))
