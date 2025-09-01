@@ -59,6 +59,7 @@ with open(path.join(here, "DESCRIPTION.md"), encoding="utf-8") as description:
 					"magloader=magloader.__main__:main",
 					"magquery=magloader.query.__main__:main",
 					"magprepare=magloader.prepare.__main__:main",
+					"magrelease=magloader.release.__main__:main",
 				],
 			},
 		data_files=[],

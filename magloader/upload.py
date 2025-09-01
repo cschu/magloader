@@ -29,7 +29,7 @@ def prepare_manifest_files(study_id, assemblies, workdir, mags=False,):
                 print(manifest)
             yield manifest_file
                 
-def process_manifest(manifest_file, user, password, submit=True, run_on_dev_server=False, java_max_heap=None, use_ascp=False, sleep=None,):
+def process_manifest(manifest_file, user, password, submit=True, run_on_dev_server=False, java_max_heap=None, use_ascp=False, sleep=None, timeout=None,):
     webin_client = EnaWebinClient(user, password)
     with working_directory(pathlib.Path(manifest_file).parent):
         validation_sentinel = pathlib.Path("VALIDATION_DONE")
@@ -40,7 +40,7 @@ def process_manifest(manifest_file, user, password, submit=True, run_on_dev_serv
                 validation_sentinel.touch()
 
         if is_valid and submit:
-            ena_id, messages = webin_client.submit(manifest_file.name, dev=run_on_dev_server, java_max_heap=java_max_heap, use_ascp=use_ascp,)
+            ena_id, messages = webin_client.submit(manifest_file.name, dev=run_on_dev_server, java_max_heap=java_max_heap, use_ascp=use_ascp, timeout=timeout,)
             if sleep:
                 time.sleep(sleep)
             if ena_id:

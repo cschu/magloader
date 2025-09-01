@@ -3,6 +3,7 @@ import json
 import requests
 
 from dataclasses import dataclass, field
+from datetime import datetime
 from io import StringIO
 
 import lxml.etree, lxml.builder
@@ -44,7 +45,7 @@ class SubmissionResponse:
     submission_accession: str = None
 
     @classmethod
-    def from_xml(cls, xml, obj_type):
+    def from_xml(cls, xml, obj_type,):
         # xml = "\n".join(line for line in xml.text.strip().split("\n") if line[:5] != "<?xml")
 
         tree = lxml.etree.fromstring(xml)
@@ -52,8 +53,10 @@ class SubmissionResponse:
         d = {
             "success": tree.attrib.get("success", "false").lower() != "false",
             "receipt_date": tree.attrib.get("receiptDate"),
-            "objects": list(obj_type.parse_submission_response(tree)),
+            "objects": [],
         }
+        if obj_type is not None:
+            d["objects"] += obj_type.parse_submission_response(tree)
 
         submission = tree.find("SUBMISSION")
         if submission is not None:
@@ -68,7 +71,7 @@ class SubmissionResponse:
 
     def to_json(self):
         d = copy.deepcopy(self.__dict__)
-        d['objects'] = [o.__dict__ for o in d['objects']]
+        d['objects'] = [o.__dict__ for o in d.get('objects', [])]
 
         return json.dumps(d)
 
@@ -101,45 +104,57 @@ class Submission:
     def get_auth(self):
         return self.user, self.pw
 
-    def submit(self, obj):
+    def submit(self, obj=None, release=False,):
         # requests.post(url, files={"SUBMISSION": open("submission.xml", "rb"), "STUDY": open("study3.xml", "rb")}, auth=(webin, pw))
         # curl -u 'user:password' -F "SUBMISSION=@submission.xml" -F "STUDY=@study3.xml" "https://wwwdev.ebi.ac.uk/ena/submit/drop-box/submit/"
         url = f"https://www{('', 'dev')[self.dev]}.ebi.ac.uk/ena/submit/drop-box/submit/"
 
-        submission_xml = Submission.generate_submission(hold_date=self.hold_date)
+        submission_xml = Submission.generate_submission(hold_date=self.hold_date, release=release,)
         with open("submission.xml", "wt") as _out:
             _out.write(submission_xml)
 
-        obj_xml = obj.toxml()
-        obj_base = obj.get_base()
+        files = {
+            # "SUBMISSION": StringIO(Submission.generate_submission(hold_date=self.hold_date)),
+            "SUBMISSION": StringIO(submission_xml),
+        }
 
-        # obj_xml = lxml.etree.tostring(obj.toxml()).decode()
-        with open(f"{obj_base.__name__.lower()}.xml", "wb") as _out:
-            _out.write(lxml.etree.tostring(obj_xml, pretty_print=True,))
+        obj_base = None
+        if obj is not None:
+            obj_xml = obj.toxml()
+            obj_base = obj.get_base()
+
+            # obj_xml = lxml.etree.tostring(obj.toxml()).decode()
+            with open(f"{obj_base.__name__.lower()}.xml", "wb") as _out:
+                _out.write(lxml.etree.tostring(obj_xml, pretty_print=True,))
+
+            files[obj_base.__name__.upper().replace("SET", "")] = StringIO(lxml.etree.tostring(obj_xml).decode())
+
+        # files = {
+        #     # "SUBMISSION": StringIO(Submission.generate_submission(hold_date=self.hold_date)),
+        #     "SUBMISSION": StringIO(submission_xml),
+        #     # obj.__class__.__name__.upper().replace("SET", ""): StringIO(
+        #     #     lxml.etree.tostring(obj.toxml()).decode()
+        #     # ),
+        #     obj_base.__name__.upper().replace("SET", ""): StringIO(lxml.etree.tostring(obj_xml).decode()),
+        # }
 
         response = requests.post(
             url,
-            files={
-                # "SUBMISSION": StringIO(Submission.generate_submission(hold_date=self.hold_date)),
-                "SUBMISSION": StringIO(submission_xml),
-                # obj.__class__.__name__.upper().replace("SET", ""): StringIO(
-                #     lxml.etree.tostring(obj.toxml()).decode()
-                # ),
-                obj_base.__name__.upper().replace("SET", ""): StringIO(lxml.etree.tostring(obj_xml).decode()),
-            },
+            files=files,
             auth=self.get_auth(),
             timeout=self.timeout,
         )
 
         response_xml = "\n".join(line for line in response.text.strip().split("\n") if line[:5] != "<?xml")
-        with open(f"{obj_base.__name__.lower()}_ena_response.xml", "wt") as _out:
-            _out.write(response_xml)
+        if obj is not None:
+            with open(f"{obj_base.__name__.lower()}_ena_response.xml", "wt") as _out:
+                _out.write(response_xml)
 
         return SubmissionResponse.from_xml(response_xml, obj_base)
 
 
     @staticmethod
-    def generate_submission(hold_date=None):
+    def generate_submission(hold_date=datetime.today().strftime('%Y-%m-%d'), release=False,):
         maker = lxml.builder.ElementMaker()
 
         submission = maker.SUBMISSION
@@ -148,7 +163,9 @@ class Submission:
         add = maker.ADD
         hold = maker.HOLD
 
-        action_list = [action(add()),]
+        action_list = []
+        if not release:
+            action_list.append(action(add()))
         if hold_date is not None:
             action_list.append(action(hold(HoldUntilDate=hold_date)))
 

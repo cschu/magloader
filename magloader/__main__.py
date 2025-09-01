@@ -37,7 +37,7 @@ def register_object(user, pw, obj, obj_type, hold_date=None, dev=True, timeout=6
                 response = None
     if response is None:
         sub = Submission(user, pw, hold_date=hold_date, dev=dev, timeout=timeout,)
-        response = sub.submit(obj)
+        response = sub.submit(obj=obj,)
         with open(obj_json, "wt") as _out:
             _out.write(response.to_json())
 
@@ -114,12 +114,12 @@ def main():
     ap.add_argument("--ena_live", action="store_true")
     ap.add_argument("--threads", type=int, default=1)
     ap.add_argument("--java_max_heap", type=str, default=None,)
-    ap.add_argument("--timeout", type=int, default=60,)
+    ap.add_argument("--timeout", type=int, default=None,)
     ap.add_argument("--use_ascp", action="store_true",)
     ap.add_argument("--daymode", action="store_true",)
 
     args = ap.parse_args()
-    
+
     if args.daymode:
         sleep = 3
         threads = min(args.threads, 2)
@@ -156,6 +156,7 @@ def main():
         java_max_heap=args.java_max_heap,
         use_ascp=args.use_ascp,
         sleep=sleep,
+        timeout=None,
     )
     print(process_manifest_partial)
     
