@@ -21,7 +21,7 @@ def main():
 
 	sub = Submission(user, pw, hold_date=args.hold_date, dev=run_on_dev_server, timeout=args.timeout,)
 	response = sub.submit(release=args.study_id,)
-	with open(f"{args.study_id}.submission.json", "wt") as _out:
+	with open(f"{args.study_id}.release.json", "wt") as _out:
 		_out.write(response.to_json())
 
 	print(response)
