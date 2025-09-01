@@ -20,7 +20,7 @@ def main():
 	run_on_dev_server = not args.ena_live
 
 	sub = Submission(user, pw, hold_date=args.hold_date, dev=run_on_dev_server, timeout=args.timeout,)
-	response = sub.submit(release=True,)
+	response = sub.submit(release=args.study_id,)
 	with open(f"{args.study_id}.submission.json", "wt") as _out:
 		_out.write(response.to_json())
 
