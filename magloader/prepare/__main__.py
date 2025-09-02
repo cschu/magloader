@@ -95,10 +95,12 @@ def main():
 				json_d["status"] = "No ERZ assigned."
 
 		spire_sample_id, biosamples = samples.get(manifest["ASSEMBLYNAME"])
-		
+
 		if len(biosamples) > 1:
 			raise ValueError("TOO MANY BIOSAMPLES")
 		
+		bins = list(mongo_db.bins.find({"sample_id": biosamples[0]}))
+
 		if not INSDC_RE.match(biosamples[0]):
 			new_biosamples = []
 			cursor.execute(
@@ -116,13 +118,14 @@ def main():
 					raise ValueError("TOO MANY BIOSAMPLES " + matches)
 				new_biosamples += matches
 			biosamples = [",".join(new_biosamples)]
-		
+
 		sample_d = {
 			"assemblyname": d,
 			"biosamples": biosamples,
 			"spire_vstudy": manifest.get("STUDY"),
 			"spire_vsample": manifest.get("SAMPLE"),
 		}
+		
 
 		json_d["vstudy_id"] = manifest.get("STUDY")
 		json_d["spire_sample"] = spire_sample_id
@@ -143,7 +146,7 @@ def main():
 		}
 
 
-		bins = list(mongo_db.bins.find({"sample_id": sample_d["biosamples"][0]}))
+		# bins = list(mongo_db.bins.find({"sample_id": sample_d["biosamples"][0]}))
 		
 		if bins:
 			n_bins = len(bins)
