@@ -10,6 +10,8 @@ import pymongo
 
 from ..query.attributes import get_attributes
 
+INSDC_RE = re.compile(r'(^[ESD]R[SR]\d{6,}(,[ESD]R[SR]\d{6,})*$)|(^SAM[END][AG]?\d+(,SAM[END][AG]?\d+)*$)|(^EGA[NR]\d{11}(,EGA[NR]\d{11})*$)|(^[ESD]R[SR]\d{6,}-[ESD]R[SR]\d{6,}$)|(^SAM[END][AG]?\d+-SAM[END][AG]?\d+$)|(^EGA[NR]\d{11}-EGA[NR]\d{11}$)')
+
 """
 f=$1
 study=$(echo $f | cut -f 2 -d /)
@@ -93,15 +95,34 @@ def main():
 				json_d["status"] = "No ERZ assigned."
 
 		spire_sample_id, biosamples = samples.get(manifest["ASSEMBLYNAME"])
+		
+		if len(biosamples) > 1:
+			raise ValueError("TOO MANY BIOSAMPLES")
+		
+		if not INSDC_RE.match(biosamples[0]):
+			new_biosamples = []
+			cursor.execute(
+				"SELECT sample_alias, sample_name_on_disk, experiment_name, ena_accession "
+				"FROM metalog.experiment "
+				f"WHERE sample_alias = '{biosamples[0]}' OR sample_name_on_disk = '{biosamples[0]};"
+			)
+			for items in cursor.fetchall():
+				matches = [
+					item.group()
+			   		for item in (INSDC_RE.match(item) for item in items)
+					if item is not None
+				]
+				if len(matches) > 1:
+					raise ValueError("TOO MANY BIOSAMPLES " + matches)
+				new_biosamples += matches
+			biosamples = [",".join(new_biosamples)]
+		
 		sample_d = {
 			"assemblyname": d,
 			"biosamples": biosamples,
 			"spire_vstudy": manifest.get("STUDY"),
 			"spire_vsample": manifest.get("SAMPLE"),
 		}
-
-		if len(sample_d["biosamples"]) > 1:
-			raise ValueError("TOO MANY BIOSAMPLES")
 
 		json_d["vstudy_id"] = manifest.get("STUDY")
 		json_d["spire_sample"] = spire_sample_id
