@@ -104,7 +104,7 @@ def main():
 			cursor.execute(
 				"SELECT sample_alias, sample_name_on_disk, experiment_name, ena_accession "
 				"FROM metalog.experiment "
-				f"WHERE sample_alias = '{biosamples[0]}' OR sample_name_on_disk = '{biosamples[0]};"
+				f"WHERE sample_alias = '{biosamples[0]}' OR sample_name_on_disk = '{biosamples[0]}';"
 			)
 			for items in cursor.fetchall():
 				matches = [
