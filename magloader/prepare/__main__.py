@@ -109,13 +109,13 @@ def main():
 				f"WHERE sample_alias = '{biosamples[0]}' OR sample_name_on_disk = '{biosamples[0]}';"
 			)
 			for items in cursor.fetchall():
-				matches = [
+				matches = {
 					item.group()
 			   		for item in (INSDC_RE.match(item) for item in items)
 					if item is not None
-				]
+				}
 				if len(matches) > 1:
-					raise ValueError("TOO MANY BIOSAMPLES " + matches)
+					raise ValueError("TOO MANY BIOSAMPLES " + str(matches))
 				new_biosamples += matches
 			biosamples = [",".join(new_biosamples)]
 
