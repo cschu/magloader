@@ -104,7 +104,7 @@ class Submission:
     def get_auth(self):
         return self.user, self.pw
 
-    def submit(self, obj=None, release=None, update=False,):
+    def submit(self, obj=None, release=None, update=False, is_xml=False,):
         # requests.post(url, files={"SUBMISSION": open("submission.xml", "rb"), "STUDY": open("study3.xml", "rb")}, auth=(webin, pw))
         # curl -u 'user:password' -F "SUBMISSION=@submission.xml" -F "STUDY=@study3.xml" "https://wwwdev.ebi.ac.uk/ena/submit/drop-box/submit/"
         url = f"https://www{('', 'dev')[self.dev]}.ebi.ac.uk/ena/submit/drop-box/submit/"
@@ -120,25 +120,29 @@ class Submission:
             "SUBMISSION": StringIO(submission_xml),
         }
 
-        obj_base = None
-        if obj is not None:
-            obj_xml = obj.toxml()
-            obj_base = obj.get_base()
+        if is_xml:
+            # don't have time to make this cleaner... ><;
+            files["SAMPLE"] = StringIO(lxml.etree.tostring(obj).decode())
+        else:
+            obj_base = None
+            if obj is not None:
+                obj_xml = obj.toxml()
+                obj_base = obj.get_base()
 
-            # obj_xml = lxml.etree.tostring(obj.toxml()).decode()
-            with open(f"{obj_base.__name__.lower()}.xml", "wb") as _out:
-                _out.write(lxml.etree.tostring(obj_xml, pretty_print=True,))
+                # obj_xml = lxml.etree.tostring(obj.toxml()).decode()
+                with open(f"{obj_base.__name__.lower()}.xml", "wb") as _out:
+                    _out.write(lxml.etree.tostring(obj_xml, pretty_print=True,))
 
-            files[obj_base.__name__.upper().replace("SET", "")] = StringIO(lxml.etree.tostring(obj_xml).decode())
+                files[obj_base.__name__.upper().replace("SET", "")] = StringIO(lxml.etree.tostring(obj_xml).decode())
 
-        # files = {
-        #     # "SUBMISSION": StringIO(Submission.generate_submission(hold_date=self.hold_date)),
-        #     "SUBMISSION": StringIO(submission_xml),
-        #     # obj.__class__.__name__.upper().replace("SET", ""): StringIO(
-        #     #     lxml.etree.tostring(obj.toxml()).decode()
-        #     # ),
-        #     obj_base.__name__.upper().replace("SET", ""): StringIO(lxml.etree.tostring(obj_xml).decode()),
-        # }
+            # files = {
+            #     # "SUBMISSION": StringIO(Submission.generate_submission(hold_date=self.hold_date)),
+            #     "SUBMISSION": StringIO(submission_xml),
+            #     # obj.__class__.__name__.upper().replace("SET", ""): StringIO(
+            #     #     lxml.etree.tostring(obj.toxml()).decode()
+            #     # ),
+            #     obj_base.__name__.upper().replace("SET", ""): StringIO(lxml.etree.tostring(obj_xml).decode()),
+            # }
 
         response = requests.post(
             url,
