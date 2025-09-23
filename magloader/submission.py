@@ -104,12 +104,12 @@ class Submission:
     def get_auth(self):
         return self.user, self.pw
 
-    def submit(self, obj=None, release=None,):
+    def submit(self, obj=None, release=None, update=False,):
         # requests.post(url, files={"SUBMISSION": open("submission.xml", "rb"), "STUDY": open("study3.xml", "rb")}, auth=(webin, pw))
         # curl -u 'user:password' -F "SUBMISSION=@submission.xml" -F "STUDY=@study3.xml" "https://wwwdev.ebi.ac.uk/ena/submit/drop-box/submit/"
         url = f"https://www{('', 'dev')[self.dev]}.ebi.ac.uk/ena/submit/drop-box/submit/"
 
-        submission_xml = Submission.generate_submission(hold_date=self.hold_date, release=release,)
+        submission_xml = Submission.generate_submission(hold_date=self.hold_date, release=release, update=update,)
 
         sub_fn = f"{release}.release.xml" if release is not None else "submission.xml"
         with open(sub_fn, "wt") as _out:
@@ -156,23 +156,18 @@ class Submission:
 
 
     @staticmethod
-    def generate_submission(hold_date=datetime.today().strftime('%Y-%m-%d'), release=None,):
+    def generate_submission(hold_date=datetime.today().strftime('%Y-%m-%d'), release=None, update=False,):
         maker = lxml.builder.ElementMaker()
 
-        submission = maker.SUBMISSION
-        actions = maker.ACTIONS
         action = maker.ACTION
-        add = maker.ADD
-        hold = maker.HOLD
-        # release = maker.RELEASE
 
         action_list = []
         if release is not None:
             action_list.append(action(maker.RELEASE(target=release)))
         else:
-            action_list.append(action(add()))
+            action_list.append(action(maker.UPDATE() if update else maker.ADD()))
             if hold_date is not None:
-                action_list.append(action(hold(HoldUntilDate=hold_date)))
+                action_list.append(action(maker.HOLD(HoldUntilDate=hold_date)))
 
-        doc = submission(actions(*action_list))
+        doc = maker.SUBMISSION(maker.ACTIONS(*action_list))
         return lxml.etree.tostring(doc).decode()
