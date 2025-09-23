@@ -47,6 +47,7 @@ with open(path.join(here, "DESCRIPTION.md"), encoding="utf-8") as description:
 			'requests',
 			'psycopg2-binary',
 			"setuptools>=61.0,<69",
+			"pymongo",
 		],
 		zip_safe=False,
 		keywords="ena mag upload",
@@ -56,7 +57,9 @@ with open(path.join(here, "DESCRIPTION.md"), encoding="utf-8") as description:
 			entry_points={
 				"console_scripts": [
 					"magloader=magloader.__main__:main",
-					"magquery=magloader.query.magquery:main",
+					"magquery=magloader.query.__main__:main",
+					"magprepare=magloader.prepare.__main__:main",
+					"magrelease=magloader.release.__main__:main",
 				],
 			},
 		data_files=[],

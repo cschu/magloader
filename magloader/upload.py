@@ -1,4 +1,5 @@
 import pathlib
+import time
 
 from multiprocessing import Pool
 
@@ -14,21 +15,21 @@ def check_assemblies(biosamples, assemblies):
             raise ValueError(f"{biosample.alias} does not have an assembly!")
         yield biosample.accession, assembly
 
-def prepare_manifest_files(study_id, assemblies, workdir):
+def prepare_manifest_files(study_id, assemblies, workdir, mags=False,):
     for biosample_accession, assembly in assemblies:
-        assembly_dir = workdir / "assemblies" / assembly.assembly_name
+        assembly_dir = workdir / ("mags" if mags else "assemblies") / assembly.assembly_name
         assembly_done = assembly_dir / "DONE"
         if not assembly_done.is_file():
             assembly_dir.mkdir(parents=True, exist_ok=True,)
             manifest_file = pathlib.Path(assembly_dir / f"{assembly.assembly_name}.manifest.txt")
             if not manifest_file.is_file():
                 with open(manifest_file, "wt") as _out:
-                    manifest = Manifest.from_assembly(assembly, study_id, biosample_accession)
+                    manifest = Manifest.from_assembly(assembly, study_id, biosample_accession, mags=mags,)
                     print(manifest.to_str(), file=_out,)
                 print(manifest)
             yield manifest_file
                 
-def process_manifest(manifest_file, user, password, submit=True, run_on_dev_server=False, java_max_heap=None,):
+def process_manifest(manifest_file, user, password, submit=True, run_on_dev_server=False, java_max_heap=None, use_ascp=False, sleep=None, timeout=None,):
     webin_client = EnaWebinClient(user, password)
     with working_directory(pathlib.Path(manifest_file).parent):
         validation_sentinel = pathlib.Path("VALIDATION_DONE")
@@ -39,7 +40,9 @@ def process_manifest(manifest_file, user, password, submit=True, run_on_dev_serv
                 validation_sentinel.touch()
 
         if is_valid and submit:
-            ena_id, messages = webin_client.submit(manifest_file.name, dev=run_on_dev_server, java_max_heap=java_max_heap,)
+            ena_id, messages = webin_client.submit(manifest_file.name, dev=run_on_dev_server, java_max_heap=java_max_heap, use_ascp=use_ascp, timeout=timeout,)
+            if sleep:
+                time.sleep(sleep)
             if ena_id:
                 pathlib.Path("DONE").touch()
                 return ena_id, [], manifest_file.absolute()

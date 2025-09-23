@@ -22,15 +22,16 @@ class EnaWebinClient:
         self.username = username
         self.password = password
 
-    def _run_client(self, manifest, validate=True, dev=True, java_max_heap=None,):
+    def _run_client(self, manifest, validate=True, dev=True, java_max_heap=None, use_ascp=False, timeout=None,):
         mode = "-validate" if validate else "-submit"
         server = "-test" if dev else ""
+        ascp = "-ascp" if use_ascp else ""
         jvm_heap = f"-Xmx{java_max_heap}" if java_max_heap else ""
-        cmd = f"ena-webin-cli {jvm_heap} -username {self.username} -password '{self.password}' -context genome -manifest {manifest} {mode} {server}"
+        cmd = f"ena-webin-cli {jvm_heap} -username {self.username} -password '{self.password}' -context genome -manifest {manifest} {mode} {server} {ascp}"
         print(f"CMD: `{cmd}`")
 
         try:
-            proc = subprocess.run(shlex.split(cmd), check=True, capture_output=True,)
+            proc = subprocess.run(shlex.split(cmd), check=True, capture_output=True, timeout=timeout,)
         except subprocess.CalledProcessError as err:
             pass
 
@@ -60,6 +61,8 @@ class EnaWebinClient:
             proc = self._run_client(manifest, validate=True, dev=dev, java_max_heap=java_max_heap,)
         except subprocess.CalledProcessError as err:
             print("CAUGHT CALLED_PROCESS_ERROR:\n", err)
+        except subprocess.TimeoutExpired as err:
+            print("TIMEOUT:\n", err)
         else:
             print("PROC", proc)
         finally:
@@ -70,11 +73,13 @@ class EnaWebinClient:
 
         return False, messages
 
-    def submit(self, manifest, dev=True, java_max_heap=None,):
+    def submit(self, manifest, dev=True, java_max_heap=None, use_ascp=False, timeout=300,):
         try:
-            proc = self._run_client(manifest, validate=False, dev=dev, java_max_heap=java_max_heap,)
+            proc = self._run_client(manifest, validate=False, dev=dev, java_max_heap=java_max_heap, use_ascp=use_ascp, timeout=timeout,)
         except subprocess.CalledProcessError as err:
             print("CAUGHT CALLED_PROCESS_ERROR:\n", err)
+        except subprocess.TimeoutExpired as err:
+            print("TIMEOUT:\n", err)
         else:
             print("PROC", proc)
         finally:

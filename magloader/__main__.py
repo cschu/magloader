@@ -13,7 +13,8 @@ import lxml.etree
 
 from .assembly import Assembly
 from .manifest import Manifest
-from .sample import SampleSet
+from .sampleset import SampleSet
+from .sample import MagSample
 from .study import Study, STUDY_TYPES
 from .submission import Submission, SubmissionResponse
 from .upload import check_assemblies, prepare_manifest_files, process_manifest, upload
@@ -36,7 +37,7 @@ def register_object(user, pw, obj, obj_type, hold_date=None, dev=True, timeout=6
                 response = None
     if response is None:
         sub = Submission(user, pw, hold_date=hold_date, dev=dev, timeout=timeout,)
-        response = sub.submit(obj)
+        response = sub.submit(obj=obj,)
         with open(obj_json, "wt") as _out:
             _out.write(response.to_json())
 
@@ -45,37 +46,22 @@ def register_object(user, pw, obj, obj_type, hold_date=None, dev=True, timeout=6
     yield from response.objects
 
 
-def main():
-    ap = argparse.ArgumentParser()
+def register_samples(sample_set, workdir, sample_dir, user, pw, hold_date, run_on_dev_server, timeout):
+    # register biosamples
+    biosamples = []
+    if not sample_set.is_empty():
+        sample_dir = pathlib.Path(workdir / sample_dir)
+        sample_dir.mkdir(exist_ok=True, parents=True,)
+        with working_directory(sample_dir):
+            biosamples = register_object(user, pw, sample_set, "sample", hold_date=hold_date, dev=run_on_dev_server, timeout=timeout,)
+            biosamples = list(biosamples)
 
-    ap.add_argument("study_json", type=str)
-    ap.add_argument("webin_credentials", type=str)
-    ap.add_argument("--override", action="store_true",)  # not used at the moment
-    ap.add_argument("--workdir", "-w", type=str, default="work")
-    ap.add_argument("--hold_date", type=str, default="2025-12-31")
-    ap.add_argument("--dryruns", type=int, default=0)
-    ap.add_argument("--ena_live", action="store_true")
-    ap.add_argument("--threads", type=int, default=1)
-    ap.add_argument("--java_max_heap", type=str, default=None,)
-    ap.add_argument("--timeout", type=int, default=60,)
+        print(biosamples, sep="\n")
+    return biosamples
 
-    args = ap.parse_args()
 
-    run_on_dev_server = not args.ena_live
 
-    user, pw = get_webin_credentials(args.webin_credentials)
-    webin_client = EnaWebinClient(user, pw)
-
-    workdir = pathlib.Path(args.workdir)
-    if workdir.is_dir():
-        if args.override:
-            raise NotImplementedError("Workdir override not implemented.")
-    else:
-        workdir.mkdir(parents=True)
-
-    with open(args.study_json, "rt", encoding="UTF-8",) as json_in:
-        study_data = json.load(json_in)
-
+def register_study(study_data, workdir, user, pw, hold_date, run_on_dev_server):
     print(study_data)
 
     study_id = None
@@ -89,7 +75,7 @@ def main():
     study_dir = pathlib.Path(workdir / "study")
     study_dir.mkdir(exist_ok=True, parents=True,)
     with working_directory(study_dir):
-        studies = register_object(user, pw, study_obj, "study", hold_date=args.hold_date, dev=run_on_dev_server,)
+        studies = register_object(user, pw, study_obj, "study", hold_date=hold_date, dev=run_on_dev_server,)
         studies = list(studies)
     print(*studies, sep="\n")
 
@@ -97,34 +83,69 @@ def main():
 
     if study_id is None:
         raise ValueError("No study id.")
+    
+    return study_id
 
-    # load assembly data and extract samples
-    assemblies = {
-        f"spire_sample_{assembly['sample_id']}": Assembly(**assembly, spire_ena_project_id=study_id)
-        for i, assembly in enumerate(study_data["assemblies"])
-        if not run_on_dev_server or (args.dryruns <= 0 or i < args.dryruns)
-    }
+def process_uploads(manifests, upload_f, threads, mags=False,):
+    prefix = "mag" if mags else "assembly"
+    all_done = True
+    with open(f"{prefix}_accessions.txt", "wt") as _out:
+        for i, ena_id, messages, manifest in upload(manifests, upload_f, threads):
+            if ena_id is not None:
+                print(i, i/len(manifests), "ENA-ID", ena_id,)
+                print(ena_id, manifest, sep="\t", file=_out)
+            else:
+                print(i, i/len(manifests), *messages, sep="\n",)
+                all_done = False
+            print("-----------------------------------------------------")
 
-    biosamples = []
+    return all_done
 
-    sample_set = SampleSet()
-    sample_set.samples += (assembly.get_sample() for assembly in assemblies.values())
-    print(lxml.etree.tostring(sample_set.toxml()).decode())
 
-    # register biosamples
-    sample_dir = pathlib.Path(workdir / "samples")
-    sample_dir.mkdir(exist_ok=True, parents=True,)
-    with working_directory(sample_dir):
-        biosamples = register_object(user, pw, sample_set, "sample", hold_date=args.hold_date, dev=run_on_dev_server, timeout=args.timeout,)
-        biosamples = list(biosamples)
+def main():
+    ap = argparse.ArgumentParser()
 
-    print(biosamples, sep="\n")
+    ap.add_argument("input_json", type=str)
+    ap.add_argument("webin_credentials", type=str)
+    ap.add_argument("--override", action="store_true",)  # not used at the moment
+    ap.add_argument("--workdir", "-w", type=str, default="work")
+    ap.add_argument("--hold_date", type=str, default="2025-12-31")
+    ap.add_argument("--dryruns", type=int, default=0)
+    ap.add_argument("--ena_live", action="store_true")
+    ap.add_argument("--threads", type=int, default=1)
+    ap.add_argument("--java_max_heap", type=str, default=None,)
+    ap.add_argument("--timeout", type=int, default=None,)
+    ap.add_argument("--use_ascp", action="store_true",)
+    ap.add_argument("--daymode", action="store_true",)
 
-    # validate and submit assemblies
-    print(assemblies)
+    args = ap.parse_args()
 
-    assemblies = list(check_assemblies(biosamples, assemblies))
-    manifests = list(prepare_manifest_files(study_id, assemblies, workdir))
+    if args.daymode:
+        sleep = 3
+        threads = min(args.threads, 2)
+    else:
+        sleep = None
+        threads = args.threads
+
+
+    if pathlib.Path(f"{args.input_json}.DONE").is_file() and not args.override:
+        print(
+            f"Input '{args.input_json}' is tagged as DONE. "
+            f"Either remove '{args.input_json}.DONE' or use `--override` to continue. Exiting."
+        )
+        return None
+
+    with open(args.input_json, "rt", encoding="UTF-8",) as json_in:
+        input_data = json.load(json_in)
+
+    if not (input_data.get("mags") or input_data.get("assemblies")):
+        print(f"Input '{args.input_json}' does not contain assembly data. Exiting.")
+        pathlib.Path(f"{args.input_json}.DONE").touch()
+        return None
+
+    run_on_dev_server = not args.ena_live
+
+    user, pw = get_webin_credentials(args.webin_credentials)
 
     process_manifest_partial = partial(
         process_manifest,
@@ -133,17 +154,93 @@ def main():
         submit=True,
         run_on_dev_server=run_on_dev_server,
         java_max_heap=args.java_max_heap,
+        use_ascp=args.use_ascp,
+        sleep=sleep,
+        timeout=None,
     )
     print(process_manifest_partial)
+    
+    workdir = pathlib.Path(args.workdir)
+    # if workdir.is_dir():
+    #     if args.override:
+    #         raise NotImplementedError("Workdir override not implemented.")
+    # else:
+    workdir.mkdir(parents=True, exist_ok=True)
 
-    with open("assembly_accessions.txt", "wt") as _out:
-        for i, ena_id, messages, manifest in upload(manifests, process_manifest_partial, threads=args.threads):
-            if ena_id is not None:
-                print(i, i/len(manifests), "ENA-ID", ena_id,)
-                print(ena_id, manifest, sep="\t", file=_out)
-            else:
-                print(i, i/len(manifests), *messages, sep="\n",)
-            print("-----------------------------------------------------")
+
+
+    if input_data.get("study_id"):
+        study_id = register_study(input_data, workdir, user, pw, args.hold_date, run_on_dev_server,)
+
+        # load assembly data and extract samples
+        assemblies = {
+            f"spire_sample_{assembly['sample_id']}": Assembly(**assembly, spire_ena_project_id=study_id)
+            for i, assembly in enumerate(input_data["assemblies"])
+            if not run_on_dev_server or (args.dryruns <= 0 or i < args.dryruns)
+        }
+        sample_set = SampleSet()
+        sample_set.samples += (assembly.get_sample() for assembly in assemblies.values())
+
+        # print(lxml.etree.tostring(sample_set.toxml()).decode())
+
+        biosamples = register_samples(sample_set, workdir, "samples", user, pw, args.hold_date, run_on_dev_server, args.timeout)
+
+
+        # validate and submit assemblies
+        # print(assemblies)
+
+        assemblies = list(check_assemblies(biosamples, assemblies))
+        manifests = list(prepare_manifest_files(study_id, assemblies, workdir))
+
+        all_done = process_uploads(manifests, process_manifest_partial, threads, mags=False,)
+        if all_done:
+            pathlib.Path(f"{args.input_json}.DONE").touch()
+
+    elif input_data.get("vstudy_id"):
+        study_id = input_data["vstudy_id"]
+
+        sample_set = SampleSet()
+
+        assemblies = {}
+        for i, (bin_id, mag) in enumerate(input_data["mags"].items()):
+            if not run_on_dev_server or (args.dryruns <= 0 or i < args.dryruns):
+                assemblies[mag["mag_id"]] = Assembly(
+                    spire_ena_project_id=study_id,
+                    sample_id=input_data["spire_sample"],
+                    assembly_name=mag["mag_id"],
+                    assembly_type="Metagenome-Assembled Genome (MAG)",
+                    program=mag["program"],
+                    file_path=mag["bin_path"],
+                    coverage=mag["coverage"],
+                    biosamples=mag["biosamples"],
+                    program_version=mag["program_version"],
+                )
+                sample_set.samples.append(
+                    MagSample(
+                        spire_ena_project_id=study_id,
+                        sample_id=mag["mag_id"],
+                        biosamples=mag["biosamples"],
+                        attributes=mag["attribs"],
+                    )
+                )
+
+        # print(lxml.etree.tostring(sample_set.toxml()).decode())
+        biosamples = register_samples(sample_set, workdir, f"vsamples/{input_data['spire_sample']}", user, pw, args.hold_date, run_on_dev_server, args.timeout)
+
+        # validate and submit assemblies
+        # print(assemblies)
+        if biosamples:
+            assemblies = list(check_assemblies(biosamples, assemblies))
+
+            # print(assemblies)
+
+            manifests = list(prepare_manifest_files(study_id, assemblies, workdir, mags=True,))
+
+            all_done = process_uploads(manifests, process_manifest_partial, threads, mags=True,)
+            if all_done:
+                pathlib.Path(f"{args.input_json}.DONE").touch()
+
+
 
     return None
 
