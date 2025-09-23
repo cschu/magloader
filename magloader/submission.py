@@ -122,7 +122,10 @@ class Submission:
 
         if is_xml:
             # don't have time to make this cleaner... ><;
+            with open(f"sampleset.xml", "wb") as _out:
+                _out.write(lxml.etree.tostring(obj, pretty_print=True,))
             files["SAMPLE"] = StringIO(lxml.etree.tostring(obj).decode())
+
         else:
             obj_base = None
             if obj is not None:
