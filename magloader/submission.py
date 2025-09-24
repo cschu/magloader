@@ -8,6 +8,8 @@ from io import StringIO
 
 import lxml.etree, lxml.builder
 
+from .sampleset import SampleSet, Sample
+
 
 @dataclass
 class SubmissionResponseObject:
@@ -126,6 +128,7 @@ class Submission:
                 _out.write(lxml.etree.tostring(obj, pretty_print=True,))
             files["SAMPLE"] = StringIO(lxml.etree.tostring(obj).decode())
             response_prefix = "update"
+            obj_base = SampleSet
 
         else:
             obj_base = None
