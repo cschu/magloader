@@ -122,11 +122,11 @@ class Submission:
 
         if xml is not None:
             # don't have time to make this cleaner... ><;
+            obj_base = obj.get_base()
             with open(f"sampleset.xml", "wb") as _out:
                 _out.write(lxml.etree.tostring(xml, pretty_print=True,))
             files["SAMPLE"] = StringIO(lxml.etree.tostring(xml).decode())
             response_prefix = f"{obj_base.__name__.lower()}_update"
-            obj_base = obj.get_base()
 
         else:
             obj_base = None
