@@ -104,12 +104,12 @@ class Submission:
     def get_auth(self):
         return self.user, self.pw
 
-    def submit(self, obj=None, release=None, update=False, xml=None,):
+    def submit(self, obj=None, release=None, modify=False, xml=None,):
         # requests.post(url, files={"SUBMISSION": open("submission.xml", "rb"), "STUDY": open("study3.xml", "rb")}, auth=(webin, pw))
         # curl -u 'user:password' -F "SUBMISSION=@submission.xml" -F "STUDY=@study3.xml" "https://wwwdev.ebi.ac.uk/ena/submit/drop-box/submit/"
         url = f"https://www{('', 'dev')[self.dev]}.ebi.ac.uk/ena/submit/drop-box/submit/"
 
-        submission_xml = Submission.generate_submission(hold_date=self.hold_date, release=release, update=update,)
+        submission_xml = Submission.generate_submission(hold_date=self.hold_date, release=release, modify=modify,)
 
         sub_fn = f"{release}.release.xml" if release is not None else "submission.xml"
         with open(sub_fn, "wt") as _out:
@@ -126,7 +126,7 @@ class Submission:
             with open(f"sampleset.xml", "wb") as _out:
                 _out.write(lxml.etree.tostring(xml, pretty_print=True,))
             files["SAMPLE"] = StringIO(lxml.etree.tostring(xml).decode())
-            response_prefix = f"{obj_base.__name__.lower()}_update"
+            response_prefix = f"{obj_base.__name__.lower()}_modify"
 
         else:
             obj_base = None
@@ -167,7 +167,7 @@ class Submission:
 
 
     @staticmethod
-    def generate_submission(hold_date=datetime.today().strftime('%Y-%m-%d'), release=None, update=False,):
+    def generate_submission(hold_date=datetime.today().strftime('%Y-%m-%d'), release=None, modify=False,):
         maker = lxml.builder.ElementMaker()
 
         action = maker.ACTION
@@ -176,7 +176,7 @@ class Submission:
         if release is not None:
             action_list.append(action(maker.RELEASE(target=release)))
         else:
-            action_list.append(action(maker.UPDATE() if update else maker.ADD()))
+            action_list.append(action(maker.MODIFY() if modify else maker.ADD()))
             if hold_date is not None:
                 action_list.append(action(maker.HOLD(HoldUntilDate=hold_date)))
 
