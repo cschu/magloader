@@ -125,9 +125,11 @@ class Submission:
             with open(f"sampleset.xml", "wb") as _out:
                 _out.write(lxml.etree.tostring(obj, pretty_print=True,))
             files["SAMPLE"] = StringIO(lxml.etree.tostring(obj).decode())
+            response_prefix = "update"
 
         else:
             obj_base = None
+            response_prefix = "release"
             if obj is not None:
                 obj_xml = obj.toxml()
                 obj_base = obj.get_base()
@@ -137,6 +139,7 @@ class Submission:
                     _out.write(lxml.etree.tostring(obj_xml, pretty_print=True,))
 
                 files[obj_base.__name__.upper().replace("SET", "")] = StringIO(lxml.etree.tostring(obj_xml).decode())
+                response_prefix = f"{obj_base.__name__.lower()}"
 
             # files = {
             #     # "SUBMISSION": StringIO(Submission.generate_submission(hold_date=self.hold_date)),
@@ -156,7 +159,7 @@ class Submission:
 
         response_xml = "\n".join(line for line in response.text.strip().split("\n") if line[:5] != "<?xml")
         if obj is not None:
-            with open(f"{obj_base.__name__.lower()}_ena_response.xml", "wt") as _out:
+            with open(f"{response_prefix}_ena_response.xml", "wt") as _out:
                 _out.write(response_xml)
 
         return SubmissionResponse.from_xml(response_xml, obj_base)
