@@ -8,8 +8,6 @@ from io import StringIO
 
 import lxml.etree, lxml.builder
 
-from .sampleset import SampleSet, Sample
-
 
 @dataclass
 class SubmissionResponseObject:
