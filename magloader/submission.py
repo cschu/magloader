@@ -106,7 +106,7 @@ class Submission:
     def get_auth(self):
         return self.user, self.pw
 
-    def submit(self, obj=None, release=None, update=False, is_xml=False,):
+    def submit(self, obj=None, release=None, update=False, xml=None,):
         # requests.post(url, files={"SUBMISSION": open("submission.xml", "rb"), "STUDY": open("study3.xml", "rb")}, auth=(webin, pw))
         # curl -u 'user:password' -F "SUBMISSION=@submission.xml" -F "STUDY=@study3.xml" "https://wwwdev.ebi.ac.uk/ena/submit/drop-box/submit/"
         url = f"https://www{('', 'dev')[self.dev]}.ebi.ac.uk/ena/submit/drop-box/submit/"
@@ -122,13 +122,13 @@ class Submission:
             "SUBMISSION": StringIO(submission_xml),
         }
 
-        if is_xml:
+        if xml is not None:
             # don't have time to make this cleaner... ><;
             with open(f"sampleset.xml", "wb") as _out:
-                _out.write(lxml.etree.tostring(obj, pretty_print=True,))
-            files["SAMPLE"] = StringIO(lxml.etree.tostring(obj).decode())
-            response_prefix = "update"
-            obj_base = SampleSet
+                _out.write(lxml.etree.tostring(xml, pretty_print=True,))
+            files["SAMPLE"] = StringIO(lxml.etree.tostring(xml).decode())
+            response_prefix = f"{obj_base.__name__.lower()}_update"
+            obj_base = obj.get_base()
 
         else:
             obj_base = None
