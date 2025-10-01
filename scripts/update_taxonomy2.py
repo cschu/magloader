@@ -3,6 +3,7 @@
 import argparse
 import pathlib
 import re
+import time
 
 import lxml.etree as ET
 import lxml.builder 
@@ -16,7 +17,7 @@ from magloader.workdir import working_directory
 def read_taxonomies(f):
     with open(f, "rt") as _in:
         return dict(
-            (line.strip().split("\t") + ["NOTFOUND:-1",])[1::4]
+            (line.strip().split("\t") + ["NOTFOUND:-1",])[1::5]
             for line in _in
         ) 
 
@@ -39,7 +40,8 @@ def main():
     ap.add_argument("--workdir", "-w", type=str, default="work")
     ap.add_argument("--hold_date", type=str)
     ap.add_argument("--ena_live", action="store_true")
-    ap.add_argument("--timeout", type=int, default=None,)
+    ap.add_argument("--timeout", type=int, default=300,)
+    ap.add_argument("--force", action="store_true")
     
     args = ap.parse_args()
 
@@ -58,12 +60,24 @@ def main():
     maker = lxml.builder.ElementMaker()
 
     # /g/bork6/schudoma/projects/spire/upload/prod/studies/102/work/vsamples/13230/sampleset.xml
+    # /g/bork6/schudoma/projects/spire/upload/magloader/taxonomy_update_20250925/vsamples/23/2737/sampleset.xml
     
     for path, mags in samples.items():
-        study = re.search(r"studies/([0-9]+)", path).group(1)
-        sample = re.search(r"vsamples/([0-9]+)", path).group(1)
+        # study = re.search(r"studies/([0-9]+)", path)
+        study = re.search(r"vsamples/([0-9]+)", path)
+        if study is None:
+            continue
+        study = study.group(1)
+        # sample = re.search(r"vsamples/([0-9]+)", path)
+        sample = re.search(r"vsamples/[0-9]+/([0-9]+)", path)
+        if sample is None:
+            continue
+        sample = sample.group(1)
 
         sample_dir = workdir / "vsamples" / study / sample
+        done_sentinel = sample_dir / "DONE"
+        if done_sentinel.is_file() and not args.force:
+            continue
         sample_dir.mkdir(exist_ok=True, parents=True,)
         
         with open(path, "rt") as _in:
@@ -71,37 +85,54 @@ def main():
             for s in tree.findall("SAMPLE"):
                 alias = s.attrib.get("alias") 
                 if mags.get(alias) is not None:
-                    taxon = taxdict.get(alias)
-                    if taxon.startswith("SEARCH_NOT_IMPLEMENTED"):
+                    taxid = taxdict.get(alias)
+                    if taxid is None:
                         continue
-                    print(taxon)
-                    if ";" in taxon:
-                        taxon = taxon.split(";")[0]
-                    taxname, taxid = taxon.split(":")
-                    n = s.find("SAMPLE_NAME")
-                    children = n.getchildren()
-                    children[0].text = taxid
-                    n.insert(1, maker.SCIENTIFIC_NAME(taxname))
-                    n.insert(2, maker.COMMON_NAME(""))
+                    title = s.find("TITLE")
+                    # title.text = re.sub(r"(;?[dpcofg]__;|s__$)", "", title.text)
+                    # title.text = re.sub(r"(.+)(classified as )(.+;)?([^;]+)$", r"\1\2\3", title.text)
+                    # lineage = re.sub(r"(;?[dpcofg]__;|s__$)", "", re.search("d__.+$", title.text).group(0))
+                    lineage_match = re.search("d__.+$", title.text)
+                    if lineage_match is None:
+                        title.text = f"Metagenome-Assembled Genome {alias} in SPIRE v01, unclassified"
+                    else:
+                        taxon = re.sub(r"^[dpcofgs]__", "", re.sub(r"[^;]+;", "", re.sub(r"(;?[dpcofg]__;|;s__$)", "", lineage_match.group(0))))
                     
-                    print(alias, path, taxon, children)
-                    tree = maker.SAMPLE_SET(s)
-                    break
+                        # title.text = re.sub(r"[dpcofgs]__", "", re.sub(r"(.+)(classified as )(.+;)?([^;]+)$", r"\1\2\4", re.sub(r"(;?[dpcofg]__;|s__$)", "", title.text))).replace(",", "")
+                        title.text = f"Metagenome-Assembled Genome {alias} in SPIRE v01 classified as {taxon}"
+                    
+                    #sed "s/\(;\?[dpcofg]__;\|s__$\)//g"
+                    
+
+                    n = s.find("SAMPLE_NAME")
+                    t = n.find("TAXON_ID")
+                    t.text = taxid
+
+
+                    # children = n.getchildren()
+                    # children[0].text = taxid
+                    #n.insert(1, maker.SCIENTIFIC_NAME(taxname))
+                    #n.insert(2, maker.COMMON_NAME(""))
+                    
+                    print(alias, path, taxid)
+                    # tree = maker.SAMPLE_SET(s)
+                    #break
             
             with working_directory(sample_dir):
+                
                 tree = ET.fromstring(ET.tostring(tree), parser)
-                #with open(workdir / "sampleset.xml", "wb") as _out:
-                #    # _out.write(ET.tostring(ET.fromstring(ET.tostring(tree), parser), pretty_print=True,))
-                #    _out.write(ET.tostring(tree), pretty_print=True,))
 
                 sub = Submission(user, pw, hold_date=None, dev=run_on_dev_server, timeout=args.timeout,)
                 response = sub.submit(obj=SampleSet(), modify=True, xml=tree,)
                 with open(f"sampleset.modify.json", "wt") as _out:
                     _out.write(response.to_json())
-
                 print(response)
+                if response.success:
+                    pathlib.Path("DONE").touch()
+                # time.sleep(3)
 
-        break
+
+        #break
 
     
     
