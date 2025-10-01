@@ -104,12 +104,12 @@ class Submission:
     def get_auth(self):
         return self.user, self.pw
 
-    def submit(self, obj=None, release=None,):
+    def submit(self, obj=None, release=None, modify=False, xml=None,):
         # requests.post(url, files={"SUBMISSION": open("submission.xml", "rb"), "STUDY": open("study3.xml", "rb")}, auth=(webin, pw))
         # curl -u 'user:password' -F "SUBMISSION=@submission.xml" -F "STUDY=@study3.xml" "https://wwwdev.ebi.ac.uk/ena/submit/drop-box/submit/"
         url = f"https://www{('', 'dev')[self.dev]}.ebi.ac.uk/ena/submit/drop-box/submit/"
 
-        submission_xml = Submission.generate_submission(hold_date=self.hold_date, release=release,)
+        submission_xml = Submission.generate_submission(hold_date=self.hold_date, release=release, modify=modify,)
 
         sub_fn = f"{release}.release.xml" if release is not None else "submission.xml"
         with open(sub_fn, "wt") as _out:
@@ -120,25 +120,36 @@ class Submission:
             "SUBMISSION": StringIO(submission_xml),
         }
 
-        obj_base = None
-        if obj is not None:
-            obj_xml = obj.toxml()
+        if xml is not None:
+            # don't have time to make this cleaner... ><;
             obj_base = obj.get_base()
+            with open(f"sampleset.xml", "wb") as _out:
+                _out.write(lxml.etree.tostring(xml, pretty_print=True,))
+            files["SAMPLE"] = StringIO(lxml.etree.tostring(xml).decode())
+            response_prefix = f"{obj_base.__name__.lower()}_modify"
 
-            # obj_xml = lxml.etree.tostring(obj.toxml()).decode()
-            with open(f"{obj_base.__name__.lower()}.xml", "wb") as _out:
-                _out.write(lxml.etree.tostring(obj_xml, pretty_print=True,))
+        else:
+            obj_base = None
+            response_prefix = "release"
+            if obj is not None:
+                obj_xml = obj.toxml()
+                obj_base = obj.get_base()
 
-            files[obj_base.__name__.upper().replace("SET", "")] = StringIO(lxml.etree.tostring(obj_xml).decode())
+                # obj_xml = lxml.etree.tostring(obj.toxml()).decode()
+                with open(f"{obj_base.__name__.lower()}.xml", "wb") as _out:
+                    _out.write(lxml.etree.tostring(obj_xml, pretty_print=True,))
 
-        # files = {
-        #     # "SUBMISSION": StringIO(Submission.generate_submission(hold_date=self.hold_date)),
-        #     "SUBMISSION": StringIO(submission_xml),
-        #     # obj.__class__.__name__.upper().replace("SET", ""): StringIO(
-        #     #     lxml.etree.tostring(obj.toxml()).decode()
-        #     # ),
-        #     obj_base.__name__.upper().replace("SET", ""): StringIO(lxml.etree.tostring(obj_xml).decode()),
-        # }
+                files[obj_base.__name__.upper().replace("SET", "")] = StringIO(lxml.etree.tostring(obj_xml).decode())
+                response_prefix = f"{obj_base.__name__.lower()}"
+
+            # files = {
+            #     # "SUBMISSION": StringIO(Submission.generate_submission(hold_date=self.hold_date)),
+            #     "SUBMISSION": StringIO(submission_xml),
+            #     # obj.__class__.__name__.upper().replace("SET", ""): StringIO(
+            #     #     lxml.etree.tostring(obj.toxml()).decode()
+            #     # ),
+            #     obj_base.__name__.upper().replace("SET", ""): StringIO(lxml.etree.tostring(obj_xml).decode()),
+            # }
 
         response = requests.post(
             url,
@@ -149,30 +160,25 @@ class Submission:
 
         response_xml = "\n".join(line for line in response.text.strip().split("\n") if line[:5] != "<?xml")
         if obj is not None:
-            with open(f"{obj_base.__name__.lower()}_ena_response.xml", "wt") as _out:
+            with open(f"{response_prefix}_ena_response.xml", "wt") as _out:
                 _out.write(response_xml)
 
         return SubmissionResponse.from_xml(response_xml, obj_base)
 
 
     @staticmethod
-    def generate_submission(hold_date=datetime.today().strftime('%Y-%m-%d'), release=None,):
+    def generate_submission(hold_date=datetime.today().strftime('%Y-%m-%d'), release=None, modify=False,):
         maker = lxml.builder.ElementMaker()
 
-        submission = maker.SUBMISSION
-        actions = maker.ACTIONS
         action = maker.ACTION
-        add = maker.ADD
-        hold = maker.HOLD
-        # release = maker.RELEASE
 
         action_list = []
         if release is not None:
             action_list.append(action(maker.RELEASE(target=release)))
         else:
-            action_list.append(action(add()))
+            action_list.append(action(maker.MODIFY() if modify else maker.ADD()))
             if hold_date is not None:
-                action_list.append(action(hold(HoldUntilDate=hold_date)))
+                action_list.append(action(maker.HOLD(HoldUntilDate=hold_date)))
 
-        doc = submission(actions(*action_list))
+        doc = maker.SUBMISSION(maker.ACTIONS(*action_list))
         return lxml.etree.tostring(doc).decode()
